@@ -8,19 +8,13 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 export default defineConfig({
   plugins: [react()],
   base: './',
-  root: path.resolve(__dirname, 'src/renderer'),
-  publicDir: path.resolve(__dirname, 'public'),
+  root: '.',
+  publicDir: 'public',
   build: {
-    outDir: path.resolve(__dirname, 'dist/renderer'),
+    outDir: 'dist/renderer',
     emptyOutDir: true,
-    chunkSizeWarningLimit: 1500,
     rollupOptions: {
       input: path.resolve(__dirname, 'src/renderer/index.html'),
-      output: {
-        manualChunks: {
-          'vendor-react': ['react', 'react-dom'],
-        },
-      },
     },
   },
   resolve: {

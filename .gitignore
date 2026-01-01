@@ -28,10 +28,6 @@ npm-debug.log*
 # TypeScript
 *.tsbuildinfo
 
-# Prevent accidental compiled JS inside src/
-src/shared/*.js
-src/renderer/shared/*.js
-
 # Testing
 coverage/
 

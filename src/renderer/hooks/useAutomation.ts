@@ -1,7 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import type { AutomationProgress, LogEntry, StartAutomationRequest } from '@shared/types';
-
-const MAX_LOGS = 500; // Evitar memory leak con logs infinitos
+import type { AutomationProgress, LogEntry, StartAutomationRequest } from '../../shared/types';
 
 export function useAutomation() {
   const [status, setStatus] = useState<AutomationProgress['status']>('idle');
@@ -10,11 +8,6 @@ export function useAutomation() {
   const [isPaused, setIsPaused] = useState(false);
 
   useEffect(() => {
-    // Guard: skip if electronAPI is not available (e.g., in browser dev mode)
-    if (!window.electronAPI) {
-      return;
-    }
-
     // Suscribirse a eventos de automatización
     const unsubProgress = window.electronAPI.onAutomationProgress((newProgress) => {
       setProgress(newProgress);
@@ -22,11 +15,7 @@ export function useAutomation() {
     });
 
     const unsubLog = window.electronAPI.onAutomationLog((log) => {
-      setLogs(prev => {
-        const next = [...prev, log];
-        // Truncar si excede MAX_LOGS (mantener los más recientes)
-        return next.length > MAX_LOGS ? next.slice(-MAX_LOGS) : next;
-      });
+      setLogs(prev => [...prev, log]);
     });
 
     const unsubComplete = window.electronAPI.onAutomationComplete(() => {
@@ -46,8 +35,6 @@ export function useAutomation() {
   }, []);
 
   const start = useCallback(async (request: StartAutomationRequest) => {
-    if (!window.electronAPI) return;
-    
     setLogs([]);
     setStatus('running');
     setProgress(null);
@@ -74,14 +61,12 @@ export function useAutomation() {
   }, []);
 
   const stop = useCallback(async () => {
-    if (!window.electronAPI) return;
     await window.electronAPI.stopAutomation();
     setStatus('idle');
     setIsPaused(false);
   }, []);
 
   const togglePause = useCallback(async () => {
-    if (!window.electronAPI) return;
     await window.electronAPI.pauseAutomation();
     setIsPaused(prev => !prev);
     setStatus(prev => prev === 'running' ? 'paused' : 'running');

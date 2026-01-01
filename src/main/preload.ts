@@ -1,76 +1,72 @@
-/**
- * Preload Script - Bridge between Main and Renderer
- * Expone APIs seguras al proceso renderer via contextBridge
- */
-import { contextBridge, ipcRenderer, IpcRendererEvent } from 'electron';
-import { IPC } from '@shared/ipc';
+import { contextBridge, ipcRenderer } from 'electron';
 import type { 
   StartAutomationRequest, 
   Credentials, 
   CSVRow, 
   AutomationProgress,
-  LogEntry,
-  ConfigKey 
-} from '@shared/types';
-
-interface UpdateProgress {
-  percent: number;
-  bytesPerSecond: number;
-  transferred: number;
-  total: number;
-}
+  LogEntry 
+} from '../shared/types';
 
 // Exponer APIs seguras al renderer
 contextBridge.exposeInMainWorld('electronAPI', {
   // CSV
-  loadCSV: () => ipcRenderer.invoke(IPC.CSV_LOAD),
-  saveCSV: (data: CSVRow[]) => ipcRenderer.invoke(IPC.CSV_SAVE, data),
+  loadCSV: () => ipcRenderer.invoke('csv:load'),
+  saveCSV: (data: CSVRow[]) => ipcRenderer.invoke('csv:save', data),
 
   // Credenciales
   saveCredentials: (credentials: Credentials) => 
-    ipcRenderer.invoke(IPC.CREDENTIALS_SAVE, credentials),
-  loadCredentials: () => ipcRenderer.invoke(IPC.CREDENTIALS_LOAD),
-  clearCredentials: () => ipcRenderer.invoke(IPC.CREDENTIALS_CLEAR),
+    ipcRenderer.invoke('credentials:save', credentials),
+  loadCredentials: () => ipcRenderer.invoke('credentials:load'),
+  clearCredentials: () => ipcRenderer.invoke('credentials:clear'),
 
   // Config
-  getConfig: (key: ConfigKey) => ipcRenderer.invoke(IPC.CONFIG_GET, key),
-  setConfig: (key: ConfigKey, value: unknown) => ipcRenderer.invoke(IPC.CONFIG_SET, key, value),
+  getConfig: (key: string) => ipcRenderer.invoke('config:get', key),
+  setConfig: (key: string, value: unknown) => 
+    ipcRenderer.invoke('config:set', key, value),
 
   // Automatización
   startAutomation: (request: StartAutomationRequest) => 
-    ipcRenderer.invoke(IPC.AUTOMATION_START, request),
-  stopAutomation: () => ipcRenderer.invoke(IPC.AUTOMATION_STOP),
-  pauseAutomation: () => ipcRenderer.invoke(IPC.AUTOMATION_PAUSE),
+    ipcRenderer.invoke('automation:start', request),
+  stopAutomation: () => ipcRenderer.invoke('automation:stop'),
+  pauseAutomation: () => ipcRenderer.invoke('automation:pause'),
 
   // Eventos de automatización
   onAutomationProgress: (callback: (progress: AutomationProgress) => void) => {
-    const handler = (_: IpcRendererEvent, progress: AutomationProgress) => callback(progress);
-    ipcRenderer.on(IPC.AUTOMATION_PROGRESS, handler);
-    return () => ipcRenderer.removeListener(IPC.AUTOMATION_PROGRESS, handler);
+    ipcRenderer.on('automation:progress', (_, progress) => callback(progress));
+    return () => ipcRenderer.removeAllListeners('automation:progress');
   },
   onAutomationLog: (callback: (log: LogEntry) => void) => {
-    const handler = (_: IpcRendererEvent, log: LogEntry) => callback(log);
-    ipcRenderer.on(IPC.AUTOMATION_LOG, handler);
-    return () => ipcRenderer.removeListener(IPC.AUTOMATION_LOG, handler);
+    ipcRenderer.on('automation:log', (_, log) => callback(log));
+    return () => ipcRenderer.removeAllListeners('automation:log');
   },
   onAutomationComplete: (callback: (result: { success: boolean }) => void) => {
-    const handler = (_: IpcRendererEvent, result: { success: boolean }) => callback(result);
-    ipcRenderer.on(IPC.AUTOMATION_COMPLETE, handler);
-    return () => ipcRenderer.removeListener(IPC.AUTOMATION_COMPLETE, handler);
+    ipcRenderer.on('automation:complete', (_, result) => callback(result));
+    return () => ipcRenderer.removeAllListeners('automation:complete');
   },
   onAutomationError: (callback: (error: { error: string }) => void) => {
-    const handler = (_: IpcRendererEvent, error: { error: string }) => callback(error);
-    ipcRenderer.on(IPC.AUTOMATION_ERROR, handler);
-    return () => ipcRenderer.removeListener(IPC.AUTOMATION_ERROR, handler);
-  },
-
-  // Updates
-  checkForUpdates: () => ipcRenderer.invoke('check-for-updates'),
-  getAppVersion: () => ipcRenderer.invoke('get-app-version'),
-  installUpdate: () => ipcRenderer.invoke('install-update'),
-  onUpdateProgress: (callback: (progress: UpdateProgress) => void) => {
-    const handler = (_: IpcRendererEvent, progress: UpdateProgress) => callback(progress);
-    ipcRenderer.on('update-download-progress', handler);
-    return () => ipcRenderer.removeListener('update-download-progress', handler);
+    ipcRenderer.on('automation:error', (_, error) => callback(error));
+    return () => ipcRenderer.removeAllListeners('automation:error');
   },
 });
+
+// Tipos para TypeScript en el renderer
+declare global {
+  interface Window {
+    electronAPI: {
+      loadCSV: () => Promise<{ success: boolean; data?: CSVRow[]; error?: string; filePath?: string }>;
+      saveCSV: (data: CSVRow[]) => Promise<{ success: boolean; error?: string }>;
+      saveCredentials: (credentials: Credentials) => Promise<boolean>;
+      loadCredentials: () => Promise<Credentials | null>;
+      clearCredentials: () => Promise<boolean>;
+      getConfig: (key: string) => Promise<unknown>;
+      setConfig: (key: string, value: unknown) => Promise<boolean>;
+      startAutomation: (request: StartAutomationRequest) => Promise<{ success: boolean; error?: string }>;
+      stopAutomation: () => Promise<{ success: boolean }>;
+      pauseAutomation: () => Promise<{ success: boolean }>;
+      onAutomationProgress: (callback: (progress: AutomationProgress) => void) => () => void;
+      onAutomationLog: (callback: (log: LogEntry) => void) => () => void;
+      onAutomationComplete: (callback: (result: { success: boolean }) => void) => () => void;
+      onAutomationError: (callback: (error: { error: string }) => void) => () => void;
+    };
+  }
+}

@@ -2,97 +2,44 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ============================================================================
-   Theme Variables
-   ============================================================================ */
-:root {
-  --bg-primary: #ffffff;
-  --bg-secondary: #f8fafc;
-  --bg-tertiary: #f1f5f9;
-  --text-primary: #0f172a;
-  --text-secondary: #475569;
-  --text-muted: #94a3b8;
-  --border-color: #e2e8f0;
-  --accent-color: #3b82f6;
-}
-
-:root.dark, [data-theme="dark"] {
-  --bg-primary: #0f172a;
-  --bg-secondary: #1e293b;
-  --bg-tertiary: #334155;
-  --text-primary: #f8fafc;
-  --text-secondary: #cbd5e1;
-  --text-muted: #64748b;
-  --border-color: #334155;
-  --accent-color: #3b82f6;
-}
-
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
 
-/* ============================================================================
-   Theme Transition - Smooth mode switching
-   ============================================================================ */
-*,
-*::before,
-*::after {
-  transition-property: background-color, border-color, color, fill, stroke, box-shadow;
-  transition-duration: 200ms;
-  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-/* Disable transitions on page load to prevent flash */
-.no-transitions *,
-.no-transitions *::before,
-.no-transitions *::after {
-  transition: none !important;
-}
-
 body {
   font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
-  min-height: 100vh;
-}
-
-/* Light mode body */
-:root:not(.dark) body {
-  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 50%, #f8fafc 100%);
-  color: #0f172a;
-}
-
-/* Dark mode body */
-.dark body, [data-theme="dark"] body {
   background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+  min-height: 100vh;
   color: #e2e8f0;
 }
 
-/* Custom scrollbar - Light mode */
+/* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  @apply bg-gray-200 dark:bg-slate-800;
+  background: #1e293b;
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb {
-  @apply bg-primary-400 dark:bg-primary-600;
+  background: #3b82f6;
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  @apply bg-primary-500 dark:bg-primary-500;
+  background: #2563eb;
 }
 
 /* Glassmorphism effect */
 .glass {
-  @apply bg-white/70 dark:bg-slate-800/70;
+  background: rgba(30, 41, 59, 0.7);
   backdrop-filter: blur(10px);
-  @apply border border-gray-200 dark:border-slate-700;
+  border: 1px solid rgba(59, 130, 246, 0.2);
 }
 
 /* Animation classes */
@@ -124,23 +71,21 @@ body {
   }
 }
 
-/* Input styling - Light/Dark mode */
+/* Input styling */
 input, select, textarea {
-  @apply bg-white dark:bg-dark-200 border border-gray-300 dark:border-slate-600 rounded-lg px-4 py-2;
-  @apply text-gray-900 dark:text-white;
+  @apply bg-dark-200 border border-slate-600 rounded-lg px-4 py-2 text-white;
   @apply focus:border-primary-500 focus:ring-2 focus:ring-primary-500/30 focus:outline-none;
   @apply transition-all duration-200;
 }
 
 input::placeholder {
-  @apply text-gray-400 dark:text-slate-500;
+  @apply text-slate-500;
 }
 
 /* Button base styles */
 .btn {
   @apply px-4 py-2 rounded-lg font-medium transition-all duration-200;
-  @apply focus:outline-none focus:ring-2 focus:ring-offset-2;
-  @apply focus:ring-offset-white dark:focus:ring-offset-dark-200;
+  @apply focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-dark-200;
 }
 
 .btn-primary {
@@ -164,313 +109,22 @@ input::placeholder {
 }
 
 .btn-secondary {
-  @apply bg-gray-200 dark:bg-slate-700 hover:bg-gray-300 dark:hover:bg-slate-600;
-  @apply text-gray-800 dark:text-white;
+  @apply bg-slate-700 hover:bg-slate-600 text-white;
   @apply focus:ring-slate-500;
 }
 
 /* Card styling */
 .card {
-  @apply bg-white dark:bg-dark-100/80 rounded-xl border border-gray-200 dark:border-slate-700/50 p-8;
-  @apply backdrop-blur-sm shadow-lg dark:shadow-xl;
+  @apply bg-dark-100/80 rounded-xl border border-slate-700/50 p-6;
+  @apply backdrop-blur-sm shadow-xl;
 }
 
 /* Tab styling */
 .tab {
-  @apply px-4 py-2 text-gray-500 dark:text-slate-400 hover:text-gray-900 dark:hover:text-white transition-colors;
+  @apply px-4 py-2 text-slate-400 hover:text-white transition-colors;
   @apply border-b-2 border-transparent;
 }
 
 .tab.active {
   @apply text-primary-400 border-primary-500;
-}
-
-/* ============================================================================
-   Animations
-   ============================================================================ */
-@keyframes fade-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-@keyframes slide-in {
-  from { 
-    opacity: 0;
-    transform: translateX(20px);
-  }
-  to { 
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-@keyframes slide-down {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
-.animate-fade-in {
-  animation: fade-in 0.2s ease-out;
-}
-
-.animate-slide-in {
-  animation: slide-in 0.3s ease-out;
-}
-
-.animate-slide-down {
-  animation: slide-down 0.2s ease-out;
-}
-
-.animate-spin {
-  animation: spin 1s linear infinite;
-}
-
-/* ============================================================================
-   Fast Tooltips - Native title attribute with faster display
-   ============================================================================ */
-[title] {
-  position: relative;
-}
-
-/* Custom tooltip that appears faster than native */
-.tooltip {
-  @apply relative;
-}
-
-.tooltip::after {
-  content: attr(data-tip);
-  @apply absolute z-50 px-2 py-1 text-xs font-medium text-white bg-gray-900 dark:bg-gray-700 rounded shadow-lg;
-  @apply opacity-0 invisible transition-all duration-150;
-  @apply whitespace-nowrap;
-  bottom: calc(100% + 6px);
-  left: 50%;
-  transform: translateX(-50%);
-}
-
-.tooltip:hover::after {
-  @apply opacity-100 visible;
-  transition-delay: 100ms;
-}
-
-/* Tooltip positioned below */
-.tooltip-bottom::after {
-  bottom: auto;
-  top: calc(100% + 6px);
-}
-
-/* Custom fast tooltip - uses data-tooltip attribute to avoid native title conflict */
-[data-tooltip] {
-  position: relative;
-}
-
-[data-tooltip]:hover::before {
-  content: attr(data-tooltip);
-  position: absolute;
-  z-index: 9999;
-  bottom: calc(100% + 8px);
-  left: 50%;
-  transform: translateX(-50%);
-  padding: 4px 8px;
-  font-size: 12px;
-  font-weight: 500;
-  white-space: nowrap;
-  color: white;
-  background: rgba(17, 24, 39, 0.95);
-  border-radius: 6px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  pointer-events: none;
-  opacity: 0;
-  animation: tooltipFadeIn 150ms ease-out 100ms forwards;
-}
-
-[data-tooltip]:hover::after {
-  content: '';
-  position: absolute;
-  z-index: 9999;
-  bottom: calc(100% + 4px);
-  left: 50%;
-  transform: translateX(-50%);
-  border: 4px solid transparent;
-  border-top-color: rgba(17, 24, 39, 0.95);
-  pointer-events: none;
-  opacity: 0;
-  animation: tooltipFadeIn 150ms ease-out 100ms forwards;
-}
-
-[data-tooltip-bottom]:hover::before {
-  top: calc(100% + 8px);
-  bottom: auto;
-}
-
-[data-tooltip-bottom]:hover::after {
-  top: calc(100% + 4px);
-  bottom: auto;
-  border-top-color: transparent;
-  border-bottom-color: rgba(17, 24, 39, 0.95);
-}
-
-@keyframes tooltipFadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-/* ============================================================================
-   Skeleton Loader Animations
-   ============================================================================ */
-@keyframes shimmer {
-  0% {
-    background-position: -200% 0;
-  }
-  100% {
-    background-position: 200% 0;
-  }
-}
-
-.animate-shimmer {
-  background: linear-gradient(
-    90deg,
-    rgba(255, 255, 255, 0) 0%,
-    rgba(255, 255, 255, 0.2) 20%,
-    rgba(255, 255, 255, 0.5) 60%,
-    rgba(255, 255, 255, 0) 100%
-  );
-  background-size: 200% 100%;
-  animation: shimmer 1.5s ease-in-out infinite;
-}
-
-.dark .animate-shimmer {
-  background: linear-gradient(
-    90deg,
-    rgba(255, 255, 255, 0) 0%,
-    rgba(255, 255, 255, 0.05) 20%,
-    rgba(255, 255, 255, 0.1) 60%,
-    rgba(255, 255, 255, 0) 100%
-  );
-  background-size: 200% 100%;
-}
-
-/* ============================================================================
-   Tab Transitions
-   ============================================================================ */
-@keyframes tab-enter {
-  from {
-    opacity: 0;
-    transform: translateX(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-@keyframes tab-exit {
-  from {
-    opacity: 1;
-    transform: translateX(0);
-  }
-  to {
-    opacity: 0;
-    transform: translateX(-10px);
-  }
-}
-
-.tab-content-enter {
-  animation: tab-enter 0.2s ease-out forwards;
-}
-
-.tab-content-exit {
-  animation: tab-exit 0.2s ease-out forwards;
-}
-
-/* ============================================================================
-   Staggered List Animation
-   ============================================================================ */
-@keyframes stagger-in {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.stagger-item {
-  opacity: 0;
-  animation: stagger-in 0.3s ease-out forwards;
-}
-
-/* ============================================================================
-   Scale Animation for Modals/Dialogs
-   ============================================================================ */
-@keyframes scale-in {
-  from {
-    opacity: 0;
-    transform: scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-@keyframes scale-out {
-  from {
-    opacity: 1;
-    transform: scale(1);
-  }
-  to {
-    opacity: 0;
-    transform: scale(0.95);
-  }
-}
-
-.animate-scale-in {
-  animation: scale-in 0.2s ease-out forwards;
-}
-
-.animate-scale-out {
-  animation: scale-out 0.15s ease-in forwards;
-}
-
-/* ============================================================================
-   Focus visible styling for accessibility
-   ============================================================================ */
-.focus-visible:focus {
-  @apply outline-none ring-2 ring-primary-500 ring-offset-2 ring-offset-white dark:ring-offset-dark-200;
-}
-
-/* Skip to content link styling */
-.skip-to-content {
-  @apply absolute -top-10 left-4 z-50 px-4 py-2 bg-primary-600 text-white rounded-md;
-  @apply focus:top-4 transition-all duration-200;
-}
-
-/* Screen reader only text */
-.sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border-width: 0;
 }

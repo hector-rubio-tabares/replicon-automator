@@ -1,16 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
-import type { TimeSlot, AccountMappings, AppConfig } from '@shared/types';
-import { DEFAULT_HORARIOS, DEFAULT_CONFIG } from '@shared/constants';
+import type { TimeSlot, AccountMappings, AppConfig } from '../../shared/types';
+import { DEFAULT_HORARIOS, DEFAULT_CONFIG, DEFAULT_MAPPINGS } from '../../shared/constants';
 
 export function useConfig() {
   const [horarios, setHorariosState] = useState<TimeSlot[]>(DEFAULT_HORARIOS);
-  const [mappings, setMappingsState] = useState<AccountMappings>({});
-  const [appConfig, setAppConfigState] = useState<AppConfig>({
-    loginUrl: '',
-    timeout: 45000,
-    headless: false,
-    autoSave: true,
-  });
+  const [mappings, setMappingsState] = useState<AccountMappings>(DEFAULT_MAPPINGS);
+  const [appConfig, setAppConfigState] = useState<AppConfig>(DEFAULT_CONFIG);
 
   // Cargar configuración al inicio
   useEffect(() => {
@@ -29,9 +24,6 @@ export function useConfig() {
         const savedAppConfig = await window.electronAPI.getConfig('config');
         if (savedAppConfig) {
           setAppConfigState(savedAppConfig as AppConfig);
-        } else if (DEFAULT_CONFIG) {
-          // Backward compatibility if a hardcoded default exists
-          setAppConfigState(DEFAULT_CONFIG as unknown as AppConfig);
         }
       } catch (error) {
         console.error('Error loading config:', error);

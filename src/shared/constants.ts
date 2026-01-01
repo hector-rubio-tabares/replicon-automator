@@ -7,9 +7,12 @@ export const DEFAULT_HORARIOS = [
   { id: '2', start_time: '2:00pm', end_time: '4:00pm' },
 ];
 
-// DEFAULT_CONFIG is seeded from `.env` in Electron main (see src/main/index.ts)
-// and then persisted in electron-store under the key `config`.
-export const DEFAULT_CONFIG = null;
+export const DEFAULT_CONFIG = {
+  loginUrl: 'https://newshore.okta.com/',
+  timeout: 45000,
+  headless: false,
+  autoSave: true,
+};
 
 export const SPECIAL_ACCOUNTS = {
   VACATION: ['H', 'F'],
@@ -17,8 +20,62 @@ export const SPECIAL_ACCOUNTS = {
   WEEKEND: ['FDS', 'ND'],
 };
 
-// DEFAULT_MAPPINGS moved to JSON (assets/default-mappings.json) and is seeded into
-// electron-store in src/main/index.ts under the key `mappings`.
+export const DEFAULT_MAPPINGS = {
+  "BH": {
+    "name": "No work",
+    "projects": {}
+  },
+  "H": {
+    "name": "Vacation",
+    "projects": {}
+  },
+  "F": {
+    "name": "Vacation",
+    "projects": {}
+  },
+  "AV": {
+    "name": "Avianca",
+    "projects": {
+      "MS": "Avianca-Services-AM",
+      "PR": "Avianca-Services-Projects"
+    }
+  },
+  "JM": {
+    "name": "Jambojet",
+    "projects": {
+      "MS": "Jambojet-Services-AM",
+      "PR": "Jambojet-Services-Projects"
+    }
+  },
+  "PROD": {
+    "name": "Newshore (Product)",
+    "projects": {
+      "MS": "",
+      "PR": "",
+      "IN": "Engineering",
+      "PI": "Platform-Integrations"
+    }
+  },
+  "PU": {
+    "name": "Plus Ultra",
+    "projects": {
+      "MS": "PlusUltra- Services- AM",
+      "PR": "PlusUltra-Services-Projects",
+      "IBE": "PlusUltra-IBE-Setup"
+    }
+  },
+  "DT": {
+    "name": "TAAGAngola",
+    "projects": {
+      "MS": "TAAGAngola-Services-AM",
+      "PR": "TAAGAngola-Services-Projects"
+    }
+  },
+  "NEW": {
+    "name": "Newshore (Interno)",
+    "projects": {}
+  }
+};
 
 // Templates CSV predefinidos
 export const CSV_TEMPLATES = [
