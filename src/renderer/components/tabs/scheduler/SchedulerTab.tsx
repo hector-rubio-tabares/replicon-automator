@@ -1,0 +1,98 @@
+/**
+ * Scheduler Tab Component - UI for managing scheduled tasks
+ * Refactored to use useScheduler hook and sub-components
+ */
+import { useTranslation } from '@/i18n';
+import { useScheduler } from '@/hooks/useScheduler';
+import { EmptyState } from './EmptyState';
+import { TaskItem } from './TaskItem';
+import { TaskEditModal } from './TaskEditModal';
+import { PlusIcon } from './SchedulerIcons';
+
+export function SchedulerTab() {
+  const { t } = useTranslation();
+  const {
+    tasks,
+    isEditing,
+    editingTask,
+    isLoading,
+    createTask,
+    editTask,
+    saveTask,
+    deleteTask,
+    toggleTask,
+    runTaskNow,
+    closeEditor,
+    updateEditingTask,
+    updateSchedule,
+    toggleDayOfWeek,
+    formatDate,
+    daysOfWeek,
+  } = useScheduler();
+
+  return (
+    <div className="p-6 space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+            {t('scheduler.title')}
+          </h2>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+            {t('scheduler.description')}
+          </p>
+        </div>
+        <button
+          onClick={createTask}
+          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 
+                     transition-colors duration-200 flex items-center gap-2"
+        >
+          <PlusIcon />
+          {t('scheduler.newTask')}
+        </button>
+      </div>
+
+      {/* Task List */}
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+        {isLoading ? (
+          <div className="p-8 text-center">
+            <div className="animate-spin h-8 w-8 border-2 border-blue-600 border-t-transparent rounded-full mx-auto" />
+            <p className="mt-4 text-gray-600 dark:text-gray-400">{t('common.loading')}</p>
+          </div>
+        ) : tasks.length === 0 ? (
+          <EmptyState onCreateTask={createTask} />
+        ) : (
+          <div className="divide-y divide-gray-200 dark:divide-gray-700">
+            {tasks.map((task) => (
+              <TaskItem
+                key={task.id}
+                task={task}
+                daysOfWeek={daysOfWeek}
+                onToggle={toggleTask}
+                onEdit={editTask}
+                onDelete={deleteTask}
+                onRunNow={runTaskNow}
+                formatDate={formatDate}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Edit Modal */}
+      {isEditing && editingTask && (
+        <TaskEditModal
+          task={editingTask}
+          daysOfWeek={daysOfWeek}
+          onSave={saveTask}
+          onClose={closeEditor}
+          onUpdateTask={updateEditingTask}
+          onUpdateSchedule={updateSchedule}
+          onToggleDayOfWeek={toggleDayOfWeek}
+        />
+      )}
+    </div>
+  );
+}
+
+export default SchedulerTab;

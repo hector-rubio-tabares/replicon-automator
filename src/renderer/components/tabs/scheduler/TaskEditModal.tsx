@@ -1,0 +1,170 @@
+/**
+ * TaskEditModal Component - Modal for creating/editing scheduled tasks
+ */
+import { memo } from 'react';
+import type { ScheduledTask } from '@/hooks/useScheduler';
+import { useTranslation } from '@/i18n';
+
+interface TaskEditModalProps {
+  task: Partial<ScheduledTask>;
+  daysOfWeek: { value: number; label: string }[];
+  onSave: () => void;
+  onClose: () => void;
+  onUpdateTask: (updates: Partial<ScheduledTask>) => void;
+  onUpdateSchedule: (updates: Partial<ScheduledTask['schedule']>) => void;
+  onToggleDayOfWeek: (day: number) => void;
+}
+
+export const TaskEditModal = memo(function TaskEditModal({
+  task,
+  daysOfWeek,
+  onSave,
+  onClose,
+  onUpdateTask,
+  onUpdateSchedule,
+  onToggleDayOfWeek,
+}: TaskEditModalProps) {
+  const { t } = useTranslation();
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl p-6 w-full max-w-md mx-4">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+          {task.id ? t('scheduler.editTask') : t('scheduler.newTask')}
+        </h3>
+
+        <div className="space-y-4">
+          {/* Task Name */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
+              {t('scheduler.taskName')}
+            </label>
+            <input
+              type="text"
+              value={task.name || ''}
+              onChange={(e) => onUpdateTask({ name: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg
+                         bg-white dark:bg-gray-700 text-gray-900 dark:text-white
+                         focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder={t('scheduler.taskName')}
+            />
+          </div>
+
+          {/* Frequency */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
+              {t('scheduler.frequency')}
+            </label>
+            <select
+              value={task.schedule?.type || 'daily'}
+              onChange={(e) =>
+                onUpdateSchedule({ type: e.target.value as 'daily' | 'weekly' | 'monthly' | 'once' })
+              }
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg
+                         bg-white dark:bg-gray-700 text-gray-900 dark:text-white
+                         focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              <option value="daily">{t('scheduler.daily')}</option>
+              <option value="weekly">{t('scheduler.weekly')}</option>
+              <option value="monthly">{t('scheduler.monthly')}</option>
+              <option value="once">{t('scheduler.once')}</option>
+            </select>
+          </div>
+
+          {/* Time */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
+              {t('scheduler.time')}
+            </label>
+            <input
+              type="time"
+              value={task.schedule?.time || '09:00'}
+              onChange={(e) => onUpdateSchedule({ time: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg
+                         bg-white dark:bg-gray-700 text-gray-900 dark:text-white
+                         focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
+
+          {/* Days of Week (for weekly) */}
+          {task.schedule?.type === 'weekly' && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
+                {t('scheduler.daysOfWeek')}
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {daysOfWeek.map((day) => (
+                  <button
+                    key={day.value}
+                    onClick={() => onToggleDayOfWeek(day.value)}
+                    className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors
+                                ${
+                                  task.schedule?.daysOfWeek?.includes(day.value)
+                                    ? 'bg-blue-600 text-white'
+                                    : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200'
+                                }`}
+                  >
+                    {day.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Day of Month (for monthly) */}
+          {task.schedule?.type === 'monthly' && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
+                {t('scheduler.dayOfMonth')}
+              </label>
+              <input
+                type="number"
+                min="1"
+                max="31"
+                value={task.schedule?.dayOfMonth || 1}
+                onChange={(e) => onUpdateSchedule({ dayOfMonth: parseInt(e.target.value) })}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg
+                           bg-white dark:bg-gray-700 text-gray-900 dark:text-white
+                           focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
+          )}
+
+          {/* Date (for once) */}
+          {task.schedule?.type === 'once' && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
+                {t('scheduler.date')}
+              </label>
+              <input
+                type="date"
+                value={task.schedule?.date || ''}
+                onChange={(e) => onUpdateSchedule({ date: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg
+                           bg-white dark:bg-gray-700 text-gray-900 dark:text-white
+                           focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
+          )}
+        </div>
+
+        {/* Actions */}
+        <div className="flex justify-end gap-3 mt-6">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 text-gray-700 dark:text-gray-200 bg-gray-100 dark:bg-gray-700 
+                       rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+          >
+            {t('common.cancel')}
+          </button>
+          <button
+            onClick={onSave}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            {t('common.save')}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+});

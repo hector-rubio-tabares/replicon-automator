@@ -22,5 +22,8 @@ export { ExecutionHistory, ExecutionHistoryCompact } from './ExecutionHistory';
 export { LogsCompact } from './LogsCompact';
 export { UpdateChecker } from './UpdateChecker';
 
+// Templates
+export * from './templates';
+
 // Types de tabs (no componentes - esos son lazy)
-export type { ConfigTabProps, CSVEditorTabProps } from './tabs';
+export type { ConfigTabProps, CSVEditorTabProps, ScheduledTask } from './tabs';

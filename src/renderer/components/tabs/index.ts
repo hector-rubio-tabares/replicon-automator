@@ -7,3 +7,7 @@
 // Re-export types que puedan necesitarse externamente
 export type { ConfigTabProps } from './config/ConfigTab.types';
 export type { CSVEditorTabProps } from './csv-editor/CSVEditorTab.types';
+
+// Re-export scheduler components and types
+export * from './scheduler';
+export type { ScheduledTask } from '@/hooks/useScheduler';

@@ -1,0 +1,27 @@
+/**
+ * EmptyState Component - Shown when no scheduled tasks exist
+ */
+import { memo } from 'react';
+import { useTranslation } from '@/i18n';
+import { ClockIcon } from './SchedulerIcons';
+
+interface EmptyStateProps {
+  onCreateTask: () => void;
+}
+
+export const EmptyState = memo(function EmptyState({ onCreateTask }: EmptyStateProps) {
+  const { t } = useTranslation();
+
+  return (
+    <div className="p-8 text-center">
+      <ClockIcon className="h-12 w-12 mx-auto text-gray-400" />
+      <p className="mt-4 text-gray-600 dark:text-gray-400">{t('scheduler.noTasks')}</p>
+      <button
+        onClick={onCreateTask}
+        className="mt-4 text-blue-600 dark:text-blue-400 hover:underline"
+      >
+        {t('scheduler.createFirst')}
+      </button>
+    </div>
+  );
+});

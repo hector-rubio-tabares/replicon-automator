@@ -1,0 +1,114 @@
+/**
+ * TaskItem Component - Individual task display in the scheduler list
+ */
+import { memo } from 'react';
+import type { ScheduledTask } from '@/hooks/useScheduler';
+import { useTranslation } from '@/i18n';
+import { PlayIcon, EditIcon, TrashIcon } from './SchedulerIcons';
+
+interface TaskItemProps {
+  task: ScheduledTask;
+  daysOfWeek: { value: number; label: string }[];
+  onToggle: (id: string) => void;
+  onEdit: (task: ScheduledTask) => void;
+  onDelete: (id: string) => void;
+  onRunNow: (id: string) => void;
+  formatDate: (date?: string) => string;
+}
+
+export const TaskItem = memo(function TaskItem({
+  task,
+  daysOfWeek,
+  onToggle,
+  onEdit,
+  onDelete,
+  onRunNow,
+  formatDate,
+}: TaskItemProps) {
+  const { t } = useTranslation();
+
+  const scheduleDescription = () => {
+    switch (task.schedule.type) {
+      case 'daily':
+        return `${t('scheduler.dailyAt')} ${task.schedule.time}`;
+      case 'weekly':
+        return (
+          <>
+            {task.schedule.daysOfWeek
+              ?.map((d) => daysOfWeek.find((day) => day.value === d)?.label)
+              .join(', ')}{' '}
+            a las {task.schedule.time}
+          </>
+        );
+      case 'monthly':
+        return `${t('scheduler.monthlyDay').replace('{day}', String(task.schedule.dayOfMonth))} ${task.schedule.time}`;
+      case 'once':
+        return `${task.schedule.date} a las ${task.schedule.time}`;
+      default:
+        return '';
+    }
+  };
+
+  return (
+    <div className="p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          {/* Toggle Switch */}
+          <button
+            onClick={() => onToggle(task.id)}
+            className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full 
+                        border-2 border-transparent transition-colors duration-200
+                        ${task.enabled ? 'bg-blue-600' : 'bg-gray-200 dark:bg-gray-600'}`}
+          >
+            <span
+              className={`inline-block h-5 w-5 transform rounded-full bg-white shadow 
+                          transition duration-200 ${task.enabled ? 'translate-x-5' : 'translate-x-0'}`}
+            />
+          </button>
+
+          {/* Task Info */}
+          <div>
+            <h3 className="font-medium text-gray-900 dark:text-white">{task.name}</h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400">{scheduleDescription()}</p>
+          </div>
+        </div>
+
+        {/* Actions */}
+        <div className="flex items-center gap-2">
+          <div className="text-right text-sm text-gray-500 dark:text-gray-400 mr-4">
+            <div>
+              {t('scheduler.lastRun')}: {formatDate(task.lastRun)}
+            </div>
+            <div>
+              {t('scheduler.nextRun')}: {formatDate(task.nextRun)}
+            </div>
+          </div>
+
+          <button
+            onClick={() => onRunNow(task.id)}
+            className="p-2 text-green-600 hover:bg-green-100 dark:hover:bg-green-900/30 rounded-lg transition-colors"
+            title={t('scheduler.runNow')}
+          >
+            <PlayIcon />
+          </button>
+
+          <button
+            onClick={() => onEdit(task)}
+            className="p-2 text-blue-600 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded-lg transition-colors"
+            title={t('common.edit')}
+          >
+            <EditIcon />
+          </button>
+
+          <button
+            onClick={() => onDelete(task.id)}
+            className="p-2 text-red-600 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-lg transition-colors"
+            title={t('common.delete')}
+          >
+            <TrashIcon />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+});
