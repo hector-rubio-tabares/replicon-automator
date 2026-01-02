@@ -1,13 +1,48 @@
 import { BrowserWindow, app } from 'electron';
+import * as fs from 'fs';
+import * as path from 'path';
 
 let mainWindow: BrowserWindow | null = null;
 let isSetup = false;
+let logFilePath: string | null = null;
+
+// Crear carpeta de logs en C:\RepliconLogs
+function initLogFile() {
+  try {
+    const logDir = 'C:\\RepliconLogs';
+    if (!fs.existsSync(logDir)) {
+      fs.mkdirSync(logDir, { recursive: true });
+    }
+    const date = new Date().toISOString().split('T')[0];
+    logFilePath = path.join(logDir, `replicon-${date}.log`);
+    writeToFile('='.repeat(60));
+    writeToFile(`Session started at ${new Date().toISOString()}`);
+    writeToFile(`App version: ${app.getVersion()}`);
+    writeToFile(`Is packaged: ${app.isPackaged}`);
+    writeToFile('='.repeat(60));
+  } catch (err) {
+    console.error('Failed to init log file:', err);
+  }
+}
+
+function writeToFile(message: string) {
+  if (!logFilePath) return;
+  try {
+    const timestamp = new Date().toISOString();
+    fs.appendFileSync(logFilePath, `[${timestamp}] ${message}\n`);
+  } catch {
+    // Silently fail
+  }
+}
 
 export function setMainWindowForLogs(window: BrowserWindow | null) {
   mainWindow = window;
 }
 
 function sendLogToRenderer(level: string, message: string) {
+  // Siempre escribir a archivo
+  writeToFile(`[${level.toUpperCase()}] ${message}`);
+  
   if (mainWindow && !mainWindow.isDestroyed()) {
     try {
       mainWindow.webContents.send('main:log', { level, message });
@@ -27,10 +62,10 @@ const originalConsole = {
 };
 
 export function setupDevLogger() {
-  // Usar app.isPackaged para detectar correctamente si estamos en desarrollo
-  const isDev = !app.isPackaged;
+  // Inicializar archivo de logs siempre (dev y producción)
+  initLogFile();
   
-  if (!isDev || isSetup) return;
+  if (isSetup) return;
   isSetup = true;
 
   console.log = (...args: unknown[]) => {

@@ -71,10 +71,8 @@ function createWindow(): void {
     autoHideMenuBar: !isDev, // Ocultar menú en producción
   });
 
-  // Eliminar menú completamente en producción
-  if (!isDev) {
-    Menu.setApplicationMenu(null);
-  }
+  // En producción solo ocultar menú (autoHideMenuBar), no eliminarlo
+  // Menu.setApplicationMenu(null) causa problemas de focus en inputs
 
   if (process.platform === 'win32' && appIcon) {
     app.setAppUserModelId('com.hdrt.replicon-automator');

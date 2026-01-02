@@ -6,6 +6,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [0.0.8] - 2026-01-02
+
+### Fixed
+- Input fields not working in production (clicking on username/password fields caused app to freeze)
+- `Menu.setApplicationMenu(null)` was breaking input focus in production builds
+- Added missing `onUpdateError` type in renderer global.d.ts
+
+### Added
+- File logging system that saves all logs to `C:\RepliconLogs\replicon-{date}.log`
+- Logs now persist in both development and production modes
+- Session start info (version, packaged status) logged on startup
+
+### Technical
+- Removed `Menu.setApplicationMenu(null)` - using `autoHideMenuBar` instead
+- Logger writes to file regardless of environment
+- Better debugging capability for production issues
+
 ## [0.0.7] - 2026-01-02
 
 ### Fixed

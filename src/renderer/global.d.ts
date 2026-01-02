@@ -37,11 +37,12 @@ declare global {
       // Updates
       checkForUpdates: () => Promise<{ updateAvailable: boolean; version?: string }>;
       getAppVersion: () => Promise<string>;
-      downloadUpdate: () => Promise<{ success: boolean; error?: string }>;
-      installUpdate: () => Promise<{ success: boolean; error?: string }>;
-      isUpdateDownloaded: () => Promise<boolean>;
-      onUpdateProgress: (callback: (progress: UpdateProgress) => void) => () => void;
-      onUpdateDownloaded: (callback: () => void) => () => void;
+      downloadUpdate?: () => Promise<{ success: boolean; error?: string }>;
+      installUpdate?: () => Promise<{ success: boolean; error?: string }>;
+      isUpdateDownloaded?: () => Promise<boolean>;
+      onUpdateProgress?: (callback: (progress: UpdateProgress) => void) => () => void;
+      onUpdateDownloaded?: (callback: (info?: { version: string }) => void) => () => void;
+      onUpdateError?: (callback: () => void) => () => void;
 
       // Scheduler
       getScheduledTasks?: () => Promise<ScheduledTask[]>;
