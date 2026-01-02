@@ -97,7 +97,7 @@ export async function computeHolidaySet(year: number): Promise<Set<string>> {
 
 export function escapeCsvCell(value: string): string {
   const raw = value ?? '';
-  if (/[\",\n\r]/.test(raw)) {
+  if (/[",\n\r]/.test(raw)) {
     return `"${raw.replace(/"/g, '""')}"`;
   }
   return raw;
