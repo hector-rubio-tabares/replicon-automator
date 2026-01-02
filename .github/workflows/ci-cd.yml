@@ -51,3 +51,5 @@ jobs:
           NODE_ENV: production
       - name: Package application
         run: npm run dist
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}

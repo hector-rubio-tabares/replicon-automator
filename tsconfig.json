@@ -22,5 +22,5 @@
     }
   },
   "include": ["src/renderer/**/*", "src/shared/**/*"],
-  "references": [{ "path": "./tsconfig.main.json" }]
+  "exclude": ["dist", "node_modules"]
 }
