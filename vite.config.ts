@@ -8,14 +8,11 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 export default defineConfig({
   plugins: [react()],
   base: './',
-  root: '.',
-  publicDir: 'public',
+  root: 'src/renderer',
+  publicDir: '../../assets',
   build: {
-    outDir: 'dist/renderer',
+    outDir: '../../dist/renderer',
     emptyOutDir: true,
-    rollupOptions: {
-      input: path.resolve(__dirname, 'src/renderer/index.html'),
-    },
   },
   resolve: {
     alias: {

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Header, TabNavigation } from './components/layout';
+import Header from './components/layout/Header';
+import TabNavigation from './components/layout/TabNavigation';
 import AutomationTab from './components/tabs/automation/AutomationTab';
 import CSVEditorTab from './components/tabs/csv-editor/CSVEditorTab';
 import ConfigTab from './components/tabs/config/ConfigTab';

@@ -1,9 +1,9 @@
-import { app, BrowserWindow, ipcMain, dialog } from 'electron';
+import { app, BrowserWindow, ipcMain, dialog, nativeImage } from 'electron';
 import * as path from 'path';
+import * as fs from 'fs';
 import Store from 'electron-store';
 import { PlaywrightAutomation, CSVService, CredentialsService } from './services';
 import { DEFAULT_CONFIG, DEFAULT_MAPPINGS, DEFAULT_HORARIOS } from '../shared/constants';
-import type { AutomationProgress, LogEntry } from '../shared/types';
 
 // Store para persistencia
 const store = new Store({
@@ -17,9 +17,25 @@ const store = new Store({
 let mainWindow: BrowserWindow | null = null;
 let automation: PlaywrightAutomation | null = null;
 
-const isDev = process.env.NODE_ENV === 'development';
+const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged;
 
 function createWindow() {
+  // En desarrollo, usar process.cwd() que apunta al directorio del proyecto
+  // En producción, usar __dirname que apunta al directorio de compilación
+  const iconPath = isDev 
+    ? path.join(process.cwd(), 'assets', 'icon.ico')
+    : path.join(__dirname, '..', '..', '..', 'assets', 'icon.ico');
+
+  console.log('Icon path:', iconPath);
+  console.log('Icon exists:', fs.existsSync(iconPath));
+
+  // Crear nativeImage para el icono
+  let appIcon;
+  if (fs.existsSync(iconPath)) {
+    appIcon = nativeImage.createFromPath(iconPath);
+    console.log('Icon loaded, isEmpty:', appIcon.isEmpty());
+  }
+
   mainWindow = new BrowserWindow({
     width: 1400,
     height: 900,
@@ -30,18 +46,23 @@ function createWindow() {
       contextIsolation: true,
       preload: path.join(__dirname, 'preload.js'),
     },
-    icon: path.join(__dirname, '../../assets/icon.ico'),
+    icon: appIcon || iconPath,
     titleBarStyle: 'default',
     show: false,
     backgroundColor: '#0f172a',
   });
+
+  // Establecer icono de la aplicación en Windows
+  if (process.platform === 'win32' && appIcon) {
+    app.setAppUserModelId('com.hdrt.replicon-automator');
+  }
 
   // Cargar la aplicación
   if (isDev) {
     mainWindow.loadURL('http://localhost:5173');
     mainWindow.webContents.openDevTools();
   } else {
-    mainWindow.loadFile(path.join(__dirname, '../renderer/index.html'));
+    mainWindow.loadFile(path.join(__dirname, '../../renderer/index.html'));
   }
 
   mainWindow.once('ready-to-show', () => {
@@ -117,10 +138,10 @@ function setupIPCHandlers() {
 
     automation = new PlaywrightAutomation(
       request.config,
-      (progress: AutomationProgress) => {
+      (progress) => {
         mainWindow?.webContents.send('automation:progress', progress);
       },
-      (log: LogEntry) => {
+      (log) => {
         mainWindow?.webContents.send('automation:log', log);
       }
     );

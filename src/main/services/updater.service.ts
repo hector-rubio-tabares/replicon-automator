@@ -28,10 +28,10 @@ class UpdaterService {
     autoUpdater.autoInstallOnAppQuit = true;
     
     autoUpdater.logger = {
-      info: (msg) => logger.info(String(msg)),
-      warn: (msg) => logger.warn(String(msg)),
-      error: (msg) => logger.error(String(msg)),
-      debug: (msg) => logger.info(String(msg)),
+      info: (msg: string) => logger.info(String(msg)),
+      warn: (msg: string) => logger.warn(String(msg)),
+      error: (msg: string) => logger.error(String(msg)),
+      debug: (msg: string) => logger.info(String(msg)),
     };
 
     this.setupListeners();

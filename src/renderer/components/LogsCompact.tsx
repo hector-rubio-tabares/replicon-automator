@@ -25,7 +25,7 @@ const LogItem = memo(function LogItem({ log }: { log: LogEntry }) {
   );
 });
 
-export function LogsCompact({ logs }: LogsCompactProps) {
+export function LogsCompact({ logs = [] }: LogsCompactProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const { t } = useTranslation();
 
@@ -33,9 +33,9 @@ export function LogsCompact({ logs }: LogsCompactProps) {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [logs.length]);
+  }, [logs?.length]);
 
-  const visibleLogs = useMemo(() => logs.slice(-50), [logs]);
+  const visibleLogs = useMemo(() => logs?.slice(-50) ?? [], [logs]);
 
   return (
     <div className="card h-full flex flex-col">
@@ -44,7 +44,7 @@ export function LogsCompact({ logs }: LogsCompactProps) {
           <span className="text-2xl">📋</span>
           {t('logsExt.activityLog')}
         </h2>
-        <span className="text-gray-500 dark:text-slate-500 text-xs">{logs.length} {t('logsExt.entries')}</span>
+        <span className="text-gray-500 dark:text-slate-500 text-xs">{logs?.length ?? 0} {t('logsExt.entries')}</span>
       </div>
 
       <div 
@@ -56,9 +56,9 @@ export function LogsCompact({ logs }: LogsCompactProps) {
       >
         {visibleLogs.length > 0 ? (
           <div className="space-y-0.5">
-            {logs.length > 50 && (
+            {(logs?.length ?? 0) > 50 && (
               <div className="text-gray-500 dark:text-slate-500 text-xs mb-2 text-center">
-                {t('logsExt.showing')} 50 {t('logsExt.of')} {logs.length}
+                {t('logsExt.showing')} 50 {t('logsExt.of')} {logs?.length ?? 0}
               </div>
             )}
             {visibleLogs.map((log, index) => (
