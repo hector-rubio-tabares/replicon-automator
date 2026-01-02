@@ -229,14 +229,56 @@ export function setupIPCHandlers(deps: IPCControllerDeps): void {
 
   ipcMain.handle('app:check-updates', async () => {
     if (isDev) {
-      return { updateAvailable: false };
+      return { updateAvailable: false, version: appVersion };
     }
     
     try {
-      // TODO: Integrar electron-updater cuando esté configurado
-      return { updateAvailable: false };
+      const { updaterService } = await import('../services/updater.service');
+      const result = await updaterService.checkForUpdates();
+      return result;
     } catch {
-      return { updateAvailable: false };
+      return { updateAvailable: false, version: appVersion };
+    }
+  });
+
+  ipcMain.handle('app:download-update', async () => {
+    if (isDev) {
+      return { success: false, error: 'Updates not available in development mode' };
+    }
+    
+    try {
+      const { updaterService } = await import('../services/updater.service');
+      await updaterService.downloadUpdate();
+      return { success: true };
+    } catch (error) {
+      return { success: false, error: String(error) };
+    }
+  });
+
+  ipcMain.handle('app:install-update', async () => {
+    if (isDev) {
+      return { success: false, error: 'Updates not available in development mode' };
+    }
+    
+    try {
+      const { updaterService } = await import('../services/updater.service');
+      updaterService.installUpdate();
+      return { success: true };
+    } catch (error) {
+      return { success: false, error: String(error) };
+    }
+  });
+
+  ipcMain.handle('app:is-update-downloaded', async () => {
+    if (isDev) {
+      return false;
+    }
+    
+    try {
+      const { updaterService } = await import('../services/updater.service');
+      return updaterService.isUpdateDownloaded();
+    } catch {
+      return false;
     }
   });
 }

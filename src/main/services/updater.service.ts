@@ -2,6 +2,7 @@ import { autoUpdater, UpdateInfo, ProgressInfo } from 'electron-updater';
 import { BrowserWindow, dialog, app } from 'electron';
 import { notificationService } from './notification.service';
 import { createLogger } from '../utils';
+import { t } from '../i18n';
 
 const logger = createLogger('AutoUpdater');
 
@@ -54,18 +55,18 @@ class UpdaterService {
       this.lastUpdateInfo = info;
       
       notificationService.info(
-        '🔄 Actualización Disponible',
-        `Nueva versión ${info.version} disponible. Click para descargar.`,
+        t('updates.available'),
+        t('updates.availableDesc', { version: info.version }),
         () => this.downloadUpdate()
       );
 
       if (this.mainWindow && this.mainWindow.isVisible()) {
         const result = await dialog.showMessageBox(this.mainWindow, {
           type: 'info',
-          title: 'Actualización Disponible',
-          message: `Nueva versión ${info.version} disponible`,
-          detail: `Versión actual: ${app.getVersion()}\n\n¿Deseas descargar la actualización ahora?`,
-          buttons: ['Descargar', 'Más tarde'],
+          title: t('updates.availableTitle'),
+          message: t('updates.availableMessage', { version: info.version }),
+          detail: t('updates.availableDetail', { version: info.version, currentVersion: app.getVersion() }),
+          buttons: [t('updates.download'), t('updates.later')],
           defaultId: 0,
           cancelId: 1,
         });
@@ -100,22 +101,28 @@ class UpdaterService {
     autoUpdater.on('update-downloaded', async (info: UpdateInfo) => {
       logger.info(`Update downloaded: ${info.version}`);
       this.updateDownloaded = true;
+      this.lastUpdateInfo = info;
       
       this.mainWindow?.setProgressBar(-1);
       
+      // Notificar al renderer que la actualización está lista
+      this.mainWindow?.webContents.send('update-downloaded', {
+        version: info.version,
+      });
+      
       notificationService.success(
-        '✅ Actualización Lista',
-        `Versión ${info.version} descargada. Click para instalar.`,
+        t('updates.ready'),
+        t('updates.readyDesc', { version: info.version }),
         () => this.installUpdate()
       );
 
       if (this.mainWindow && this.mainWindow.isVisible()) {
         const result = await dialog.showMessageBox(this.mainWindow, {
           type: 'info',
-          title: 'Actualización Lista',
-          message: `Versión ${info.version} descargada`,
-          detail: 'La actualización se instalará al reiniciar la aplicación.\n\n¿Deseas reiniciar ahora?',
-          buttons: ['Reiniciar Ahora', 'Más tarde'],
+          title: t('updates.installTitle'),
+          message: t('updates.installMessage', { version: info.version }),
+          detail: t('updates.installDetail'),
+          buttons: [t('updates.restartNow'), t('updates.later')],
           defaultId: 0,
           cancelId: 1,
         });
@@ -153,8 +160,8 @@ class UpdaterService {
       logger.error('Failed to check for updates:', error);
       if (!silent) {
         notificationService.error(
-          '❌ Error',
-          'No se pudo verificar actualizaciones. Verifica tu conexión.'
+          t('updates.checkError'),
+          t('updates.checkErrorDesc')
         );
       }
       throw error;
@@ -164,15 +171,15 @@ class UpdaterService {
   async downloadUpdate(): Promise<void> {
     try {
       notificationService.info(
-        '⬇️ Descargando',
-        'Descargando actualización en segundo plano...'
+        t('updates.downloading'),
+        t('updates.downloadingDesc')
       );
       await autoUpdater.downloadUpdate();
     } catch (error) {
       logger.error('Failed to download update:', error);
       notificationService.error(
-        '❌ Error de Descarga',
-        'No se pudo descargar la actualización.'
+        t('updates.downloadError'),
+        t('updates.downloadErrorDesc')
       );
     }
   }

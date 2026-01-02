@@ -16,30 +16,85 @@ jobs:
     runs-on: windows-latest
     permissions:
       contents: write
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      release_notes: ${{ steps.changelog.outputs.notes }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Get version from tag
+        id: version
+        shell: pwsh
+        run: |
+          if ("${{ github.ref }}" -match "refs/tags/v(.+)") {
+            $version = $matches[1]
+          } else {
+            $version = (Get-Content package.json | ConvertFrom-Json).version
+          }
+          echo "version=$version" >> $env:GITHUB_OUTPUT
+          echo "Version: $version"
+      
+      - name: Extract release notes from CHANGELOG
+        id: changelog
+        shell: pwsh
+        run: |
+          $version = "${{ steps.version.outputs.version }}"
+          $changelog = Get-Content CHANGELOG.md -Raw
+          
+          # Buscar la sección de esta versión
+          $pattern = "(?s)## \[$version\].*?(?=## \[|$)"
+          if ($changelog -match $pattern) {
+            $notes = $matches[0]
+            # Limpiar el encabezado de versión
+            $notes = $notes -replace "## \[$version\].*?\n", ""
+            $notes = $notes.Trim()
+          } else {
+            $notes = "Release v$version"
+          }
+          
+          # Guardar en archivo para evitar problemas de escape
+          $notes | Out-File -FilePath release_notes.txt -Encoding utf8
+          echo "Found release notes for v$version"
+      
+      - name: Update package.json version
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: pwsh
+        run: |
+          $pkg = Get-Content package.json | ConvertFrom-Json
+          $pkg.version = "${{ steps.version.outputs.version }}"
+          $pkg | ConvertTo-Json -Depth 100 | Set-Content package.json
+          echo "Updated package.json to version ${{ steps.version.outputs.version }}"
+      
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
+      
       - name: Install dependencies
         run: npm i
+      
       - name: Run linter
         run: npm run lint
         continue-on-error: true
+      
       - name: Run type check
         run: npm run typecheck
         continue-on-error: true
+      
       - name: Build application
         run: npm run build
         env:
           NODE_ENV: production
-      - name: Package application (no publish)
+      
+      - name: Package application
         run: npx electron-builder --win --publish never
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -48,6 +103,7 @@ jobs:
             release/*.exe
             release/*.blockmap
             release/latest.yml
+            release_notes.txt
 
   release:
     name: Create Release
@@ -57,21 +113,32 @@ jobs:
     permissions:
       contents: write
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
       - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
           name: windows-installer
           path: release
+      
+      - name: Read release notes
+        id: notes
+        run: |
+          if [ -f release/release_notes.txt ]; then
+            echo "notes<<EOF" >> $GITHUB_OUTPUT
+            cat release/release_notes.txt >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+          else
+            echo "notes=Release v${{ needs.build.outputs.version }}" >> $GITHUB_OUTPUT
+          fi
+      
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
+          name: Replicon Automator v${{ needs.build.outputs.version }}
+          body: ${{ steps.notes.outputs.notes }}
           files: |
             release/*.exe
             release/*.blockmap
             release/latest.yml
-          generate_release_notes: true
           draft: false
           prerelease: false
         env:

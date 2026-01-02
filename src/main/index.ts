@@ -3,11 +3,11 @@
  * Electron application bootstrap
  */
 
-import { app, BrowserWindow, nativeImage } from 'electron';
+import { app, BrowserWindow, nativeImage, Menu } from 'electron';
 import * as path from 'path';
 import * as fs from 'fs';
 import Store from 'electron-store';
-import { PlaywrightAutomation } from './services';
+import { PlaywrightAutomation, updaterService } from './services';
 import { setupIPCHandlers, setupGlobalShortcuts, unregisterAllShortcuts } from './controllers';
 import { closeBrowser } from './services/automation-enhanced.service';
 import { DEFAULT_CONFIG, DEFAULT_MAPPINGS, DEFAULT_HORARIOS } from '../shared/constants';
@@ -71,6 +71,11 @@ function createWindow(): void {
     app.setAppUserModelId('com.hdrt.replicon-automator');
   }
 
+  // Ocultar menú en producción
+  if (!isDev) {
+    Menu.setApplicationMenu(null);
+  }
+
   if (isDev) {
     mainWindow.loadURL('http://localhost:5173');
     mainWindow.webContents.openDevTools();
@@ -80,6 +85,11 @@ function createWindow(): void {
 
   mainWindow.once('ready-to-show', () => {
     mainWindow?.show();
+    
+    // Inicializar auto-updater (solo en producción)
+    if (!isDev && mainWindow) {
+      updaterService.initialize(mainWindow);
+    }
   });
 
   mainWindow.on('closed', () => {

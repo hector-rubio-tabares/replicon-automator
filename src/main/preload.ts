@@ -51,9 +51,16 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // App info y updates
   getAppVersion: () => ipcRenderer.invoke('app:version'),
   checkForUpdates: () => ipcRenderer.invoke('app:check-updates'),
+  downloadUpdate: () => ipcRenderer.invoke('app:download-update'),
+  installUpdate: () => ipcRenderer.invoke('app:install-update'),
+  isUpdateDownloaded: () => ipcRenderer.invoke('app:is-update-downloaded'),
   onUpdateProgress: (callback: (progress: { percent: number; bytesPerSecond: number; transferred: number; total: number }) => void) => {
-    ipcRenderer.on('update:progress', (_, progress) => callback(progress));
-    return () => ipcRenderer.removeAllListeners('update:progress');
+    ipcRenderer.on('update-download-progress', (_, progress) => callback(progress));
+    return () => ipcRenderer.removeAllListeners('update-download-progress');
+  },
+  onUpdateDownloaded: (callback: () => void) => {
+    ipcRenderer.on('update-downloaded', () => callback());
+    return () => ipcRenderer.removeAllListeners('update-downloaded');
   },
 
   // Eventos de automatización
@@ -134,7 +141,11 @@ declare global {
       isEncryptionAvailable: () => Promise<boolean>;
       getAppVersion: () => Promise<string>;
       checkForUpdates: () => Promise<{ updateAvailable: boolean; version?: string }>;
+      downloadUpdate: () => Promise<{ success: boolean; error?: string }>;
+      installUpdate: () => Promise<{ success: boolean; error?: string }>;
+      isUpdateDownloaded: () => Promise<boolean>;
       onUpdateProgress: (callback: (progress: { percent: number; bytesPerSecond: number; transferred: number; total: number }) => void) => () => void;
+      onUpdateDownloaded: (callback: () => void) => () => void;
       onAutomationProgress: (callback: (progress: AutomationProgress) => void) => () => void;
       onAutomationLog: (callback: (log: LogEntry) => void) => () => void;
       onAutomationComplete: (callback: (result: { success: boolean }) => void) => () => void;

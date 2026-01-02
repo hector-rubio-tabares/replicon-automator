@@ -1,6 +1,6 @@
 {
   "name": "replicon-automator",
-  "version": "3.0.0",
+  "version": "0.0.1",
   "description": "Automatizador de Replicon - App de escritorio moderna con Electron + Playwright",
   "main": "dist/main/main/index.js",
   "author": "Hector David Rubio Tabares",
@@ -65,6 +65,11 @@
       "dist/**/*",
       "package.json"
     ],
+    "publish": {
+      "provider": "github",
+      "owner": "hector-rubio-tabares",
+      "repo": "replicon-automator"
+    },
     "win": {
       "target": [
         "nsis",
