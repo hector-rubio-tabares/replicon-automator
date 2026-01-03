@@ -1,1 +1,322 @@
-import { useCallback, useEffect, useState } from 'react';import type { CSVRow } from '@shared/types';import type { CSVEditorTabProps, DayInfo, ExtDraftEntry } from './CSVEditorTab.types';import {  DEFAULT_HOLIDAY_CODE,  DEFAULT_WEEKEND_CODE,  DOW_ES,} from './CSVEditorTab.constants';import {  buildCsvText,  buildExtString,  computeHolidaySet,  parseExtString as parseExtStringUtil,} from './CSVEditorTab.utils';import {  ToolbarSection,  DataPreview,  DataTable,  ExtrasEditorModal,} from './components';import { useTranslation } from '@/i18n';import { useCSVEditorStore } from '../../../stores/csv-editor-store';export default function CSVEditorTab({  data,  onDataChange,  onSaveCSV,  mappings,}: CSVEditorTabProps) {  const { t } = useTranslation();  const {    monthOffset,    setMonthOffset,    defaultAccount,    setDefaultAccount,    defaultProject,    setDefaultProject,    showPreview,    setShowPreview,    showCsvOutput,    setShowCsvOutput,  } = useCSVEditorStore();  const [baseNow] = useState(() => new Date());  const [dayInfo, setDayInfo] = useState<DayInfo[] | null>(null);  const [templateSavedHint, setTemplateSavedHint] = useState<string | null>(null);  const [extEditorRowIndex, setExtEditorRowIndex] = useState<number | null>(null);  const [extDraftEntries, setExtDraftEntries] = useState<ExtDraftEntry[]>([    { cuenta: '', proyecto: '', inicio: '', fin: '' },  ]);  const [extDraftError, setExtDraftError] = useState<string | null>(null);  const selectedMonthDate = new Date(baseNow.getFullYear(), baseNow.getMonth() + monthOffset, 1);  const selectedYear = selectedMonthDate.getFullYear();  const selectedMonthIndex = selectedMonthDate.getMonth();  const selectedMonthNumber = selectedMonthIndex + 1;  const daysInSelectedMonth = new Date(selectedYear, selectedMonthIndex + 1, 0).getDate();  const csvText = buildCsvText(data);  const hasData = Boolean(data && data.length > 0);  useEffect(() => {    window.setTimeout(() => setDayInfo(null), 0);  }, [monthOffset]);  useEffect(() => {    if (!data || data.length === 0) {      window.setTimeout(() => setShowCsvOutput(false), 0);    }  }, [data, setShowCsvOutput]);  useEffect(() => {    if (hasData && defaultAccount) {      window.setTimeout(() => {        void buildMonthlyTemplateAuto();      }, 0);    }  }, [monthOffset, defaultAccount, defaultProject]);  const buildMonthlyTemplateAuto = useCallback(async () => {    const pad2 = (n: number) => String(n).padStart(2, '0');    const monthIndex = selectedMonthIndex;    const year = selectedYear;    const month = selectedMonthNumber;    const daysInMonth = new Date(year, monthIndex + 1, 0).getDate();    const holidaySet = await computeHolidaySet(year);    const existing = data ?? [];    const rows: CSVRow[] = [];    const info: DayInfo[] = [];    for (let d = 1; d <= daysInMonth; d++) {      const day = new Date(year, monthIndex, d);      const dayOfWeek = day.getDay();      const dayKey = `${year}-${pad2(month)}-${pad2(d)}`;      const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;      const isHoliday = holidaySet.has(dayKey);      const prevExtras = existing[d - 1]?.extras ?? '';      info.push({        date: dayKey,        dayNumber: d,        dowLabel: DOW_ES[dayOfWeek] ?? '',        isWeekend,        isHoliday,      });      if (isWeekend) {        rows.push({ cuenta: DEFAULT_WEEKEND_CODE, proyecto: DEFAULT_WEEKEND_CODE, extras: prevExtras });        continue;      }      if (isHoliday) {        rows.push({ cuenta: DEFAULT_HOLIDAY_CODE, proyecto: '', extras: prevExtras });        continue;      }      rows.push({        cuenta: defaultAccount,        proyecto: defaultProject,        extras: prevExtras,      });    }    onDataChange(rows);    setDayInfo(info);  }, [selectedMonthIndex, selectedYear, selectedMonthNumber, data, defaultAccount, defaultProject, onDataChange]);  const parseExtString = useCallback(    (extras: string) => parseExtStringUtil(extras, mappings),    [mappings]  );  const handleAddRow = useCallback(() => {    const newRow: CSVRow = { cuenta: '', proyecto: '', extras: '' };    onDataChange([...(data || []), newRow]);    setDayInfo(null);  }, [data, onDataChange]);  const handleClearTable = useCallback(() => {    onDataChange([]);    setDayInfo(null);  }, [onDataChange]);  const handleRemoveRow = useCallback((index: number) => {    if (!data) return;    const newData = data.filter((_, i) => i !== index);    onDataChange(newData);    setDayInfo(null);  }, [data, onDataChange]);  const handleUpdateRow = useCallback((index: number, field: keyof CSVRow, value: string) => {    if (!data) return;    const newData = [...data];    newData[index] = { ...newData[index], [field]: value };    onDataChange(newData);  }, [data, onDataChange]);  const handleLoadTemplate = useCallback(async (templateData: CSVRow[]) => {    if (!templateData.length) return;    const pad2 = (n: number) => String(n).padStart(2, '0');    const monthIndex = selectedMonthIndex;    const year = selectedYear;    const month = selectedMonthNumber;    const daysInMonth = new Date(year, monthIndex + 1, 0).getDate();    const holidaySet = await computeHolidaySet(year);    const rows: CSVRow[] = [];    const info: DayInfo[] = [];    let templateIndex = 0;    for (let d = 1; d <= daysInMonth; d++) {      const day = new Date(year, monthIndex, d);      const dayOfWeek = day.getDay();      const dayKey = `${year}-${pad2(month)}-${pad2(d)}`;      const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;      const isHoliday = holidaySet.has(dayKey);      info.push({        date: dayKey,        dayNumber: d,        dowLabel: DOW_ES[dayOfWeek] ?? '',        isWeekend,        isHoliday,      });      if (isWeekend) {        rows.push({ cuenta: DEFAULT_WEEKEND_CODE, proyecto: DEFAULT_WEEKEND_CODE, extras: '' });        continue;      }      if (isHoliday) {        rows.push({ cuenta: DEFAULT_HOLIDAY_CODE, proyecto: '', extras: '' });        continue;      }      const templateRow = templateData[templateIndex % templateData.length];      rows.push({        cuenta: templateRow.cuenta || defaultAccount,        proyecto: templateRow.proyecto || defaultProject,        extras: templateRow.extras || '',      });      templateIndex++;    }    onDataChange(rows);    setDayInfo(info);  }, [selectedMonthIndex, selectedYear, selectedMonthNumber, defaultAccount, defaultProject, onDataChange]);  const handleSaveTemplateSettings = useCallback(() => {    setTemplateSavedHint(t('common.templateSaved'));    window.setTimeout(() => setTemplateSavedHint(null), 1500);  }, [t]);  const buildMonthlyTemplate = useCallback(async (mode: 'create' | 'update') => {    const pad2 = (n: number) => String(n).padStart(2, '0');    const monthIndex = selectedMonthIndex;    const year = selectedYear;    const month = selectedMonthNumber;    const daysInMonth = new Date(year, monthIndex + 1, 0).getDate();    const holidaySet = await computeHolidaySet(year);    const existing = mode === 'update' ? (data ?? []) : [];    const rows: CSVRow[] = [];    const info: DayInfo[] = [];    for (let d = 1; d <= daysInMonth; d++) {      const day = new Date(year, monthIndex, d);      const dayOfWeek = day.getDay();      const dayKey = `${year}-${pad2(month)}-${pad2(d)}`;      const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;      const isHoliday = holidaySet.has(dayKey);      const prevExtras = existing[d - 1]?.extras ?? '';      info.push({        date: dayKey,        dayNumber: d,        dowLabel: DOW_ES[dayOfWeek] ?? '',        isWeekend,        isHoliday,      });      if (isWeekend) {        rows.push({ cuenta: DEFAULT_WEEKEND_CODE, proyecto: DEFAULT_WEEKEND_CODE, extras: prevExtras });        continue;      }      if (isHoliday) {        rows.push({ cuenta: DEFAULT_HOLIDAY_CODE, proyecto: '', extras: prevExtras });        continue;      }      rows.push({        cuenta: defaultAccount,        proyecto: defaultProject,        extras: prevExtras,      });    }    onDataChange(rows);    setDayInfo(info);  }, [selectedMonthIndex, selectedYear, selectedMonthNumber, data, defaultAccount, defaultProject, onDataChange]);  const handleCreateTemplate = useCallback(() => buildMonthlyTemplate('create'), [buildMonthlyTemplate]);  const openExtEditorForRow = useCallback((rowIndex: number) => {    const current = data?.[rowIndex]?.extras ?? '';    const parsed = parseExtString(current);    if (parsed.entries.length > 0 && !parsed.error) {      setExtDraftEntries(parsed.entries);      setExtDraftError(null);    } else {      setExtDraftEntries([{ cuenta: '', proyecto: '', inicio: '', fin: '' }]);      setExtDraftError(parsed.error);    }    setExtEditorRowIndex(rowIndex);  }, [data, parseExtString]);  const closeExtEditor = useCallback(() => {    setExtEditorRowIndex(null);    setExtDraftError(null);  }, []);  const applyExtEditor = useCallback(() => {    if (extEditorRowIndex === null) return;    const nextExtras = buildExtString(extDraftEntries);    const validation = parseExtString(nextExtras);    if (nextExtras && validation.error) {      setExtDraftError(validation.error);      return;    }    handleUpdateRow(extEditorRowIndex, 'extras', nextExtras);    closeExtEditor();  }, [extEditorRowIndex, extDraftEntries, parseExtString, handleUpdateRow, closeExtEditor]);  const handleConfigureDayManually = useCallback((rowIndex: number) => {    handleUpdateRow(rowIndex, 'cuenta', DEFAULT_WEEKEND_CODE);    handleUpdateRow(rowIndex, 'proyecto', DEFAULT_WEEKEND_CODE);    openExtEditorForRow(rowIndex);  }, [handleUpdateRow, openExtEditorForRow]);  return (    <div className="space-y-6 animate-fade-in">      {}      <ToolbarSection        monthOffset={monthOffset}        onMonthOffsetChange={setMonthOffset}        selectedYear={selectedYear}        selectedMonthIndex={selectedMonthIndex}        daysInSelectedMonth={daysInSelectedMonth}        defaultAccount={defaultAccount}        onDefaultAccountChange={setDefaultAccount}        defaultProject={defaultProject}        onDefaultProjectChange={setDefaultProject}        mappings={mappings}        hasData={hasData}        templateSavedHint={templateSavedHint}        currentData={data}        onLoadTemplate={handleLoadTemplate}        onCreateTemplate={handleCreateTemplate}        onSaveTemplateSettings={handleSaveTemplateSettings}        onTogglePreview={() => setShowPreview(!showPreview)}        onToggleCsvOutput={() => setShowCsvOutput(!showCsvOutput)}        onSaveCSV={() => void onSaveCSV()}      />      {}      <DataPreview        data={data || []}        showPreview={showPreview}        showCsvOutput={showCsvOutput}        csvText={csvText}      />      {}      <DataTable        data={data || []}        dayInfo={dayInfo}        mappings={mappings}        selectedMonthIndex={selectedMonthIndex}        selectedYear={selectedYear}        daysInSelectedMonth={daysInSelectedMonth}        parseExtString={parseExtString}        onUpdateRow={handleUpdateRow}        onRemoveRow={handleRemoveRow}        onOpenExtEditor={openExtEditorForRow}        onConfigureManually={handleConfigureDayManually}        onAddRow={handleAddRow}        onClearTable={handleClearTable}      />      {}      {extEditorRowIndex !== null && (        <ExtrasEditorModal          rowIndex={extEditorRowIndex}          entries={extDraftEntries}          error={extDraftError}          mappings={mappings}          onEntriesChange={setExtDraftEntries}          onApply={applyExtEditor}          onClose={closeExtEditor}        />      )}    </div>  );}
+import { useCallback, useEffect, useState } from 'react';
+import type { CSVRow } from '@shared/types';
+import type { CSVEditorTabProps, DayInfo, ExtDraftEntry } from './CSVEditorTab.types';
+import {
+  DEFAULT_HOLIDAY_CODE,
+  DEFAULT_WEEKEND_CODE,
+  DOW_ES,
+} from './CSVEditorTab.constants';
+import {
+  buildCsvText,
+  buildExtString,
+  computeHolidaySet,
+  parseExtString as parseExtStringUtil,
+} from './CSVEditorTab.utils';
+import {
+  ToolbarSection,
+  DataPreview,
+  DataTable,
+  ExtrasEditorModal,
+} from './components';
+import { useTranslation } from '@/i18n';
+import { useCSVEditorStore } from '../../../stores/csv-editor-store';
+export default function CSVEditorTab({
+  data,
+  onDataChange,
+  onSaveCSV,
+  mappings,
+}: CSVEditorTabProps) {
+  const { t } = useTranslation();
+  const {
+    monthOffset,
+    setMonthOffset,
+    defaultAccount,
+    setDefaultAccount,
+    defaultProject,
+    setDefaultProject,
+    showPreview,
+    setShowPreview,
+    showCsvOutput,
+    setShowCsvOutput,
+  } = useCSVEditorStore();
+  const [baseNow] = useState(() => new Date());
+  const [dayInfo, setDayInfo] = useState<DayInfo[] | null>(null);
+  const [templateSavedHint, setTemplateSavedHint] = useState<string | null>(null);
+  const [extEditorRowIndex, setExtEditorRowIndex] = useState<number | null>(null);
+  const [extDraftEntries, setExtDraftEntries] = useState<ExtDraftEntry[]>([
+    { cuenta: '', proyecto: '', inicio: '', fin: '' },
+  ]);
+  const [extDraftError, setExtDraftError] = useState<string | null>(null);
+  const selectedMonthDate = new Date(baseNow.getFullYear(), baseNow.getMonth() + monthOffset, 1);
+  const selectedYear = selectedMonthDate.getFullYear();
+  const selectedMonthIndex = selectedMonthDate.getMonth();
+  const selectedMonthNumber = selectedMonthIndex + 1;
+  const daysInSelectedMonth = new Date(selectedYear, selectedMonthIndex + 1, 0).getDate();
+  const csvText = buildCsvText(data);
+  const hasData = Boolean(data && data.length > 0);
+  useEffect(() => {
+    window.setTimeout(() => setDayInfo(null), 0);
+  }, [monthOffset]);
+  useEffect(() => {
+    if (!data || data.length === 0) {
+      window.setTimeout(() => setShowCsvOutput(false), 0);
+    }
+  }, [data, setShowCsvOutput]);
+  useEffect(() => {
+    if (hasData && defaultAccount) {
+      window.setTimeout(() => {
+        void buildMonthlyTemplateAuto();
+      }, 0);
+    }
+    // Only trigger on month/project changes, not on function references
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [monthOffset, defaultAccount, defaultProject]);
+  const buildMonthlyTemplateAuto = useCallback(async () => {
+    const pad2 = (n: number) => String(n).padStart(2, '0');
+    const monthIndex = selectedMonthIndex;
+    const year = selectedYear;
+    const month = selectedMonthNumber;
+    const daysInMonth = new Date(year, monthIndex + 1, 0).getDate();
+    const holidaySet = await computeHolidaySet(year);
+    const existing = data ?? [];
+    const rows: CSVRow[] = [];
+    const info: DayInfo[] = [];
+    for (let d = 1; d <= daysInMonth; d++) {
+      const day = new Date(year, monthIndex, d);
+      const dayOfWeek = day.getDay();
+      const dayKey = `${year}-${pad2(month)}-${pad2(d)}`;
+      const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+      const isHoliday = holidaySet.has(dayKey);
+      const prevExtras = existing[d - 1]?.extras ?? '';
+      info.push({
+        date: dayKey,
+        dayNumber: d,
+        dowLabel: DOW_ES[dayOfWeek] ?? '',
+        isWeekend,
+        isHoliday,
+      });
+      if (isWeekend) {
+        rows.push({ cuenta: DEFAULT_WEEKEND_CODE, proyecto: DEFAULT_WEEKEND_CODE, extras: prevExtras });
+        continue;
+      }
+      if (isHoliday) {
+        rows.push({ cuenta: DEFAULT_HOLIDAY_CODE, proyecto: '', extras: prevExtras });
+        continue;
+      }
+      rows.push({
+        cuenta: defaultAccount,
+        proyecto: defaultProject,
+        extras: prevExtras,
+      });
+    }
+    onDataChange(rows);
+    setDayInfo(info);
+  }, [selectedMonthIndex, selectedYear, selectedMonthNumber, data, defaultAccount, defaultProject, onDataChange]);
+  const parseExtString = useCallback(
+    (extras: string) => parseExtStringUtil(extras, mappings),
+    [mappings]
+  );
+  const handleAddRow = useCallback(() => {
+    const newRow: CSVRow = { cuenta: '', proyecto: '', extras: '' };
+    onDataChange([...(data || []), newRow]);
+    setDayInfo(null);
+  }, [data, onDataChange]);
+  const handleClearTable = useCallback(() => {
+    onDataChange([]);
+    setDayInfo(null);
+  }, [onDataChange]);
+  const handleRemoveRow = useCallback((index: number) => {
+    if (!data) return;
+    const newData = data.filter((_, i) => i !== index);
+    onDataChange(newData);
+    setDayInfo(null);
+  }, [data, onDataChange]);
+  const handleUpdateRow = useCallback((index: number, field: keyof CSVRow, value: string) => {
+    if (!data) return;
+    const newData = [...data];
+    newData[index] = { ...newData[index], [field]: value };
+    onDataChange(newData);
+  }, [data, onDataChange]);
+  const handleLoadTemplate = useCallback(async (templateData: CSVRow[]) => {
+    if (!templateData.length) return;
+    const pad2 = (n: number) => String(n).padStart(2, '0');
+    const monthIndex = selectedMonthIndex;
+    const year = selectedYear;
+    const month = selectedMonthNumber;
+    const daysInMonth = new Date(year, monthIndex + 1, 0).getDate();
+    const holidaySet = await computeHolidaySet(year);
+    const rows: CSVRow[] = [];
+    const info: DayInfo[] = [];
+    let templateIndex = 0;
+    for (let d = 1; d <= daysInMonth; d++) {
+      const day = new Date(year, monthIndex, d);
+      const dayOfWeek = day.getDay();
+      const dayKey = `${year}-${pad2(month)}-${pad2(d)}`;
+      const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+      const isHoliday = holidaySet.has(dayKey);
+      info.push({
+        date: dayKey,
+        dayNumber: d,
+        dowLabel: DOW_ES[dayOfWeek] ?? '',
+        isWeekend,
+        isHoliday,
+      });
+      if (isWeekend) {
+        rows.push({ cuenta: DEFAULT_WEEKEND_CODE, proyecto: DEFAULT_WEEKEND_CODE, extras: '' });
+        continue;
+      }
+      if (isHoliday) {
+        rows.push({ cuenta: DEFAULT_HOLIDAY_CODE, proyecto: '', extras: '' });
+        continue;
+      }
+      const templateRow = templateData[templateIndex % templateData.length];
+      rows.push({
+        cuenta: templateRow.cuenta || defaultAccount,
+        proyecto: templateRow.proyecto || defaultProject,
+        extras: templateRow.extras || '',
+      });
+      templateIndex++;
+    }
+    onDataChange(rows);
+    setDayInfo(info);
+  }, [selectedMonthIndex, selectedYear, selectedMonthNumber, defaultAccount, defaultProject, onDataChange]);
+  const handleSaveTemplateSettings = useCallback(() => {
+    setTemplateSavedHint(t('common.templateSaved'));
+    window.setTimeout(() => setTemplateSavedHint(null), 1500);
+  }, [t]);
+  const buildMonthlyTemplate = useCallback(async (mode: 'create' | 'update') => {
+    const pad2 = (n: number) => String(n).padStart(2, '0');
+    const monthIndex = selectedMonthIndex;
+    const year = selectedYear;
+    const month = selectedMonthNumber;
+    const daysInMonth = new Date(year, monthIndex + 1, 0).getDate();
+    const holidaySet = await computeHolidaySet(year);
+    const existing = mode === 'update' ? (data ?? []) : [];
+    const rows: CSVRow[] = [];
+    const info: DayInfo[] = [];
+    for (let d = 1; d <= daysInMonth; d++) {
+      const day = new Date(year, monthIndex, d);
+      const dayOfWeek = day.getDay();
+      const dayKey = `${year}-${pad2(month)}-${pad2(d)}`;
+      const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+      const isHoliday = holidaySet.has(dayKey);
+      const prevExtras = existing[d - 1]?.extras ?? '';
+      info.push({
+        date: dayKey,
+        dayNumber: d,
+        dowLabel: DOW_ES[dayOfWeek] ?? '',
+        isWeekend,
+        isHoliday,
+      });
+      if (isWeekend) {
+        rows.push({ cuenta: DEFAULT_WEEKEND_CODE, proyecto: DEFAULT_WEEKEND_CODE, extras: prevExtras });
+        continue;
+      }
+      if (isHoliday) {
+        rows.push({ cuenta: DEFAULT_HOLIDAY_CODE, proyecto: '', extras: prevExtras });
+        continue;
+      }
+      rows.push({
+        cuenta: defaultAccount,
+        proyecto: defaultProject,
+        extras: prevExtras,
+      });
+    }
+    onDataChange(rows);
+    setDayInfo(info);
+  }, [selectedMonthIndex, selectedYear, selectedMonthNumber, data, defaultAccount, defaultProject, onDataChange]);
+  const handleCreateTemplate = useCallback(() => buildMonthlyTemplate('create'), [buildMonthlyTemplate]);
+  const openExtEditorForRow = useCallback((rowIndex: number) => {
+    const current = data?.[rowIndex]?.extras ?? '';
+    const parsed = parseExtString(current);
+    if (parsed.entries.length > 0 && !parsed.error) {
+      setExtDraftEntries(parsed.entries);
+      setExtDraftError(null);
+    } else {
+      setExtDraftEntries([{ cuenta: '', proyecto: '', inicio: '', fin: '' }]);
+      setExtDraftError(parsed.error);
+    }
+    setExtEditorRowIndex(rowIndex);
+  }, [data, parseExtString]);
+  const closeExtEditor = useCallback(() => {
+    setExtEditorRowIndex(null);
+    setExtDraftError(null);
+  }, []);
+  const applyExtEditor = useCallback(() => {
+    if (extEditorRowIndex === null) return;
+    const nextExtras = buildExtString(extDraftEntries);
+    const validation = parseExtString(nextExtras);
+    if (nextExtras && validation.error) {
+      setExtDraftError(validation.error);
+      return;
+    }
+    handleUpdateRow(extEditorRowIndex, 'extras', nextExtras);
+    closeExtEditor();
+  }, [extEditorRowIndex, extDraftEntries, parseExtString, handleUpdateRow, closeExtEditor]);
+  const handleConfigureDayManually = useCallback((rowIndex: number) => {
+    handleUpdateRow(rowIndex, 'cuenta', DEFAULT_WEEKEND_CODE);
+    handleUpdateRow(rowIndex, 'proyecto', DEFAULT_WEEKEND_CODE);
+    openExtEditorForRow(rowIndex);
+  }, [handleUpdateRow, openExtEditorForRow]);
+  return (
+    <div className="space-y-6 animate-fade-in">
+      {}
+      <ToolbarSection
+        monthOffset={monthOffset}
+        onMonthOffsetChange={setMonthOffset}
+        selectedYear={selectedYear}
+        selectedMonthIndex={selectedMonthIndex}
+        daysInSelectedMonth={daysInSelectedMonth}
+        defaultAccount={defaultAccount}
+        onDefaultAccountChange={setDefaultAccount}
+        defaultProject={defaultProject}
+        onDefaultProjectChange={setDefaultProject}
+        mappings={mappings}
+        hasData={hasData}
+        templateSavedHint={templateSavedHint}
+        currentData={data}
+        onLoadTemplate={handleLoadTemplate}
+        onCreateTemplate={handleCreateTemplate}
+        onSaveTemplateSettings={handleSaveTemplateSettings}
+        onTogglePreview={() => setShowPreview(!showPreview)}
+        onToggleCsvOutput={() => setShowCsvOutput(!showCsvOutput)}
+        onSaveCSV={() => void onSaveCSV()}
+      />
+      {}
+      <DataPreview
+        data={data || []}
+        showPreview={showPreview}
+        showCsvOutput={showCsvOutput}
+        csvText={csvText}
+      />
+      {}
+      <DataTable
+        data={data || []}
+        dayInfo={dayInfo}
+        mappings={mappings}
+        selectedMonthIndex={selectedMonthIndex}
+        selectedYear={selectedYear}
+        daysInSelectedMonth={daysInSelectedMonth}
+        parseExtString={parseExtString}
+        onUpdateRow={handleUpdateRow}
+        onRemoveRow={handleRemoveRow}
+        onOpenExtEditor={openExtEditorForRow}
+        onConfigureManually={handleConfigureDayManually}
+        onAddRow={handleAddRow}
+        onClearTable={handleClearTable}
+      />
+      {}
+      {extEditorRowIndex !== null && (
+        <ExtrasEditorModal
+          rowIndex={extEditorRowIndex}
+          entries={extDraftEntries}
+          error={extDraftError}
+          mappings={mappings}
+          onEntriesChange={setExtDraftEntries}
+          onApply={applyExtEditor}
+          onClose={closeExtEditor}
+        />
+      )}
+    </div>
+  );
+}

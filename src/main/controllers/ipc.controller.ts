@@ -10,14 +10,14 @@ interface IPCControllerDeps {
   getMainWindow: () => BrowserWindow | null;
   getAutomation: () => PlaywrightAutomation | null;
   setAutomation: (automation: PlaywrightAutomation | null) => void;
-  isDev: boolean;
   appVersion: string;
 }
 export function setupIPCHandlers(deps: IPCControllerDeps): void {
-  const { store, getMainWindow, getAutomation, setAutomation, isDev, appVersion } = deps;
+  const { store, getMainWindow, getAutomation, setAutomation, appVersion } = deps;
   const csvService = new CSVService();
   const credentialsService = new CredentialsService();
   automationEnhanced.preloadBrowser().catch(() => {
+    // Ignore preload errors
   });
   ipcMain.handle('csv:load', async () => {
     const mainWindow = getMainWindow();

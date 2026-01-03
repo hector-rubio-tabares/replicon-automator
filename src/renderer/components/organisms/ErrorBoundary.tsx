@@ -20,6 +20,7 @@ function getCurrentLanguage(): Language {
       return parsed?.state?.language || 'es';
     }
   } catch {
+    // Ignore localStorage errors
   }
   return 'es';
 }

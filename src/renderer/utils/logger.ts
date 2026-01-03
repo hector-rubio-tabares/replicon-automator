@@ -48,6 +48,7 @@ class RendererLogger {
 
     // Solo mostrar en consola en desarrollo
     if (isDev) {
+      /* eslint-disable no-console */
       switch (level) {
         case 'debug':
           console.debug(formatted);
@@ -62,6 +63,7 @@ class RendererLogger {
           console.error(formatted);
           break;
       }
+      /* eslint-enable no-console */
     }
   }
 
@@ -102,6 +104,7 @@ export const logger = createLogger('App');
 export function logCatch(source: string, context: string, error?: unknown): void {
   if (isDev) {
     const errorMsg = error instanceof Error ? error.message : String(error ?? 'Unknown error');
+    // eslint-disable-next-line no-console
     console.debug(`[${source}] ${context}: ${errorMsg}`);
   }
   // Siempre enviar errores al main en producción también

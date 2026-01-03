@@ -6,6 +6,34 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [3.1.0] - 2026-01-02
+
+### Fixed
+- **SSO 1Password**: Now correctly detects 1Password SSO windows and waits for login completion
+- **OK button popup**: Fixed XPath selector for OK button in time entry popup
+- **Checkout selectors**: Improved selectors for checkout button in Replicon
+- **Page loading**: Removed fixed timeout, now waits for pages to load using `waitForLoadState` events
+
+### Improved
+- **Code refactored**: Selectors centralized in `SELECTORS` constant for easy maintenance
+- **`addTimeEntry` function**: Simplified from ~70 lines to ~25 lines
+- **`isVacationOrHoliday` function**: Removed unnecessary try/catch blocks
+- **Login and selectMonth**: Now use `clickWithSelectors()` instead of manual loops
+- **ESLint warnings**: Fixed `no-unused-vars` and `no-non-null-assertion` warnings
+
+### Technical
+- Reusable selectors: `TIME_INPUT`, `PROJECT_DROPDOWN`, `OK_BUTTON`, `CHECKOUT`
+- Local `context` variable in `switchToReplicon` to avoid non-null assertions
+- Automatic page detection using `context.on('page')` event listener
+
+## [3.0.0] - 2026-01-02
+
+### Added
+- Debug mode configured for VS Code (F5)
+- Source maps enabled in `tsconfig.main.json`
+- VS Code tasks for development (`kill:5173`, `dev:renderer`, `build:main`)
+- Launch configuration with `--inspect=9229` for debugging
+
 ## [0.0.10] - 2026-01-02
 
 ### Added

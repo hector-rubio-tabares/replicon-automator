@@ -1,13 +1,28 @@
-import { app, BrowserWindow, nativeImage, Menu } from 'electron';
+import * as dotenv from 'dotenv';
 import * as path from 'path';
 import * as fs from 'fs';
+import { app, BrowserWindow, nativeImage, Menu } from 'electron';
 import Store from 'electron-store';
 import { PlaywrightAutomation } from './services';
 import { setupIPCHandlers } from './controllers';
 import { closeBrowser } from './services/automation-enhanced.service';
 import { updaterService } from './services/updater.service';
-import { DEFAULT_MAPPINGS, DEFAULT_HORARIOS, DEFAULT_CONFIG } from '../common/constants';
+import { DEFAULT_MAPPINGS, DEFAULT_HORARIOS } from '../common/constants';
 import { setupDevLogger, setMainWindowForLogs } from './utils/dev-logger';
+
+// Cargar variables de entorno según el ambiente
+const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged;
+const envFile = isDev ? '.env.development' : '.env.production';
+dotenv.config({ path: path.join(process.cwd(), envFile) });
+
+// Configuración por defecto con valores de .env
+const DEFAULT_CONFIG = {
+  loginUrl: process.env.REPLICON_LOGIN_URL || '',
+  timeout: Number(process.env.REPLICON_TIMEOUT) || 45000,
+  headless: process.env.REPLICON_HEADLESS === 'true',
+  autoSave: process.env.REPLICON_AUTOSAVE !== 'false',
+};
+
 const store = new Store<Record<string, unknown>>({
   defaults: {
     config: DEFAULT_CONFIG,
@@ -17,7 +32,6 @@ const store = new Store<Record<string, unknown>>({
 });
 let mainWindow: BrowserWindow | null = null;
 let automation: PlaywrightAutomation | null = null;
-const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged;
 const getMainWindow = () => mainWindow;
 const getAutomation = () => automation;
 const setAutomation = (instance: PlaywrightAutomation | null) => { automation = instance; };
@@ -43,7 +57,9 @@ function createWindow(): void {
     },
     icon: appIcon || iconPath,
     titleBarStyle: 'default',
-    show: false,
+    // En DEV mostramos la ventana inmediatamente para que no parezca que “no abre”.
+    // En PROD seguimos esperando a `ready-to-show`.
+    show: isDev,
     backgroundColor: '#0f172a',
     autoHideMenuBar: !isDev,
   });
@@ -55,19 +71,37 @@ function createWindow(): void {
   }
   if (isDev) {
     const devPort = process.env.VITE_DEV_PORT || '5173';
-    mainWindow.loadURL(`http://localhost:${devPort}`);
+    const devUrl = `http://localhost:${devPort}`;
+    mainWindow.loadURL(devUrl);
   } else {
     const htmlPath = path.join(__dirname, '../../renderer/index.html');
     mainWindow.loadFile(htmlPath);
   }
+
+  mainWindow.webContents.on('did-fail-load', (_event, errorCode, errorDescription, validatedURL) => {
+    // eslint-disable-next-line no-console
+    console.error('[MainWindow] did-fail-load', { errorCode, errorDescription, validatedURL });
+    if (isDev) {
+      mainWindow?.show();
+      mainWindow?.webContents.openDevTools({ mode: 'bottom' });
+    }
+  });
+
+  mainWindow.webContents.on('render-process-gone', (_event, details) => {
+    // eslint-disable-next-line no-console
+    console.error('[MainWindow] render-process-gone', details);
+  });
+
   mainWindow.webContents.on('did-finish-load', () => {
     if (isDev) {
       mainWindow?.webContents.openDevTools({ mode: 'bottom' });
     }
   });
-  mainWindow.once('ready-to-show', () => {
-    mainWindow?.show();
-  });
+  if (!isDev) {
+    mainWindow.once('ready-to-show', () => {
+      mainWindow?.show();
+    });
+  }
   mainWindow.on('closed', () => {
     setMainWindowForLogs(null);
     mainWindow = null;
@@ -87,7 +121,6 @@ app.whenReady().then(() => {
     getMainWindow,
     getAutomation,
     setAutomation,
-    isDev,
     appVersion: app.getVersion(),
   });
   app.on('activate', () => {
