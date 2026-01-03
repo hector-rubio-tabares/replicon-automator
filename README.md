@@ -1,113 +1,153 @@
 # Replicon Automator v3
 
-🚀 **App de escritorio moderna para automatizar el registro de horas en Replicon**
+🚀 **Modern desktop app to automate time entry in Replicon**
 
-## ✨ Características
+[![Version](https://img.shields.io/badge/version-3.1.0-blue.svg)](https://github.com/hector-rubio-tabares/replicon-automator/releases)
+[![Node](https://img.shields.io/badge/node-22.14.0-green.svg)](https://nodejs.org/)
+[![Electron](https://img.shields.io/badge/electron-28-purple.svg)](https://www.electronjs.org/)
 
-- **🎯 Electron + React** - Interfaz moderna y responsiva
-- **⚡ Playwright** - Automatización web ultra-rápida (sin drivers externos)
-- **📊 Editor CSV integrado** - Crea y edita tus datos directamente en la app
-- **📝 Plantillas predefinidas** - Semana estándar, vacaciones, proyectos mixtos
-- **⏰ Horarios configurables** - Define tus bloques de trabajo
-- **🏢 Mapeo de cuentas** - Configura abreviaciones y proyectos
-- **📋 Logs en tiempo real** - Monitorea el progreso de la automatización
-- **🔐 Credenciales seguras** - Guarda tus credenciales de forma cifrada
+## ✨ Features
 
-## 🛠️ Tecnologías
+- **🎯 Electron + React** - Modern and responsive UI
+- **⚡ Playwright** - Ultra-fast web automation (no external drivers)
+- **📊 Built-in CSV Editor** - Create and edit data directly in the app
+- **📝 Predefined Templates** - Standard week, vacations, mixed projects
+- **⏰ Configurable Schedules** - Define your work time blocks
+- **🏢 Account Mapping** - Configure abbreviations and projects
+- **📋 Real-time Logs** - Monitor automation progress
+- **🔐 Secure Credentials** - Save credentials encrypted with Windows Credential Manager
+- **🔄 Auto-updates** - App updates automatically when new versions are released
 
-| Tecnología | Uso |
-|------------|-----|
-| Electron 28 | Framework de app de escritorio |
-| React 18 | UI del renderer |
-| TypeScript | Tipado estático |
-| Tailwind CSS | Estilos |
-| Playwright | Automatización web |
-| Vite | Build tool para el renderer |
+## 🖥️ For End Users
 
-## 📦 Instalación
+### Installation
 
-### Requisitos
-- Node.js 18+
-- npm o yarn
+1. Download `Replicon.Automator.Setup.exe` from [Releases](https://github.com/hector-rubio-tabares/replicon-automator/releases)
+2. Run the installer
+3. Open the app
 
-### Pasos
+**That's it!** No Node.js, npm, or additional software required.
+
+---
+
+## 🛠️ For Developers
+
+### Requirements
+
+- **Node.js 22.14.0** (recommended via [Volta](https://volta.sh/) or nvm)
+- npm (comes with Node.js)
+
+### Setup
 
 ```bash
-# 1. Instalar dependencias
+# 1. Clone repository
+git clone https://github.com/hector-rubio-tabares/replicon-automator.git
+cd replicon-automator
+
+# 2. Install dependencies
 npm install
 
-# 2. Instalar navegadores de Playwright (solo la primera vez)
+# 3. Install Playwright browsers (first time only)
 npx playwright install chromium
 
-# 3. Ejecutar en modo desarrollo
+# 4. Run in development mode
 npm run dev
 
-# 4. Construir para producción
+# 5. Build for production
 npm run dist:win
 ```
 
-## 📁 Estructura del Proyecto
+### Available Scripts
+
+| Script | Description |
+|--------|-------------|
+| `npm run dev` | Start app in development mode (hot reload) |
+| `npm run build` | Build renderer and main process |
+| `npm run dist:win` | Build and create Windows installer |
+| `npm run lint` | Run ESLint |
+| `npm run typecheck` | Run TypeScript type checking |
+| `npm run test` | Run tests with Vitest |
+
+### Debug Mode (VS Code)
+
+Press `F5` to start debugging with breakpoints. The debug configuration:
+- Runs Vite dev server
+- Builds main process with source maps
+- Launches Electron with `--inspect=9229`
+
+### Tech Stack
+
+| Technology | Usage |
+|------------|-------|
+| Electron 28 | Desktop app framework |
+| React 18 | Renderer UI |
+| TypeScript | Type safety |
+| Tailwind CSS | Styling |
+| Playwright | Web automation |
+| Vite | Renderer build tool |
+| Vitest | Testing |
+
+## 📁 Project Structure
 
 ```
 RepliconAutomatorV3/
 ├── src/
-│   ├── main/                 # Proceso principal de Electron
+│   ├── main/                 # Electron main process
 │   │   ├── index.ts          # Entry point
-│   │   ├── preload.ts        # Bridge seguro renderer<->main
+│   │   ├── preload.ts        # Secure renderer<->main bridge
+│   │   ├── controllers/      # IPC handlers
 │   │   └── services/
-│   │       ├── playwright-automation.ts  # Automatización
-│   │       ├── csv-service.ts            # Manejo de CSV
-│   │       └── credentials-service.ts    # Credenciales
+│   │       ├── automation.service.ts   # Playwright automation
+│   │       ├── csv.service.ts          # CSV handling
+│   │       └── credentials.service.ts  # Secure credentials
 │   │
 │   ├── renderer/             # UI (React)
 │   │   ├── App.tsx
 │   │   ├── components/
-│   │   │   ├── Header.tsx
-│   │   │   ├── TabNavigation.tsx
-│   │   │   └── tabs/
-│   │   │       ├── AutomationTab.tsx
-│   │   │       ├── CSVEditorTab.tsx
-│   │   │       ├── ConfigTab.tsx
-│   │   │       └── LogsTab.tsx
-│   │   └── hooks/
-│   │       ├── useAutomation.ts
-│   │       ├── useCSV.ts
-│   │       └── useConfig.ts
+│   │   │   ├── atoms/        # Basic UI components
+│   │   │   ├── molecules/    # Composite components
+│   │   │   ├── organisms/    # Complex components
+│   │   │   └── pages/        # Page components
+│   │   ├── hooks/            # Custom React hooks
+│   │   └── stores/           # State management
 │   │
-│   └── shared/               # Código compartido
-│       ├── types.ts          # Tipos TypeScript
-│       ├── constants.ts      # Constantes y defaults
-│       └── utils.ts          # Utilidades
+│   ├── common/               # Shared code
+│   │   ├── types.ts          # TypeScript types
+│   │   ├── constants.ts      # Constants and defaults
+│   │   └── utils.ts          # Utilities
+│   │
+│   └── test/                 # Tests
 │
-├── assets/                   # Recursos (iconos)
+├── assets/                   # Resources (icons, default config)
+├── .vscode/                  # VS Code debug configuration
 ├── package.json
-├── tsconfig.json             # Config TS renderer
-├── tsconfig.main.json        # Config TS main
+├── tsconfig.json             # TS config for renderer
+├── tsconfig.main.json        # TS config for main
 ├── vite.config.ts
-├── tailwind.config.js
-└── README.md
+└── tailwind.config.js
 ```
 
-## 🎮 Uso
+## 🎮 Usage
 
-### 1. Configurar Credenciales
-- Ingresa tu email y contraseña de Okta
-- Opcionalmente, marca "Recordar credenciales"
+### 1. Configure Credentials
+- Enter your Okta email and password
+- Optionally check "Remember credentials"
+- Supports 1Password SSO
 
-### 2. Cargar/Crear CSV
-- **Cargar**: Usa el botón "Cargar CSV" para un archivo existente
-- **Crear**: Ve al tab "Editor CSV" y usa plantillas o crea manualmente
+### 2. Load/Create CSV
+- **Load**: Use "Load CSV" button for an existing file
+- **Create**: Go to "CSV Editor" tab and use templates or create manually
 
-### 3. Configurar Horarios (opcional)
-- Ve al tab "Configuración"
-- Ajusta los bloques de tiempo de trabajo
+### 3. Configure Schedules (optional)
+- Go to "Configuration" tab
+- Adjust work time blocks
 
-### 4. Iniciar Automatización
-- Click en "Iniciar Automatización"
-- Monitorea el progreso en tiempo real
-- Revisa los logs en el tab "Logs"
+### 4. Start Automation
+- Click "Start Automation"
+- Monitor progress in real-time
+- Review logs in the "Logs" tab
 
-## 📊 Formato CSV
+## 📊 CSV Format
 
 ```csv
 Cuenta,Projecto,Extras
@@ -116,31 +156,24 @@ AV,MS,EXT/PROD:PI:1600:1800
 PROD,IN,EXT/PROD:PI:0900:1100;AV:MS:1400:1500
 ```
 
-### Columnas
-- **Cuenta**: Código de la cuenta (ej: PROD, AV, JM)
-- **Projecto**: Código del proyecto (ej: MS, PR, PI)
-- **Extras**: Horas extra en formato `EXT/CUENTA:PROYECTO:INICIO:FIN`
+### Columns
+- **Cuenta**: Account code (e.g., PROD, AV, JM)
+- **Projecto**: Project code (e.g., MS, PR, PI)
+- **Extras**: Extra hours in format `EXT/ACCOUNT:PROJECT:START:END`
 
-### Códigos especiales
-- `H` o `F` = Vacaciones
-- `BH` = Día sin trabajo
-- `ND` = No aplica (fin de semana)
+### Special Codes
+- `H` or `F` = Vacation
+- `BH` = No work day
+- `ND` = Not applicable (weekend)
 
-## 🔧 Ventajas sobre v2 (PyQt6 + Selenium)
+## 📝 Changelog
 
-| Aspecto | v2 (PyQt6 + Selenium) | v3 (Electron + Playwright) |
-|---------|----------------------|---------------------------|
-| **Velocidad** | Lento | 3-5x más rápido |
-| **Drivers** | Requiere ChromeDriver | Sin drivers externos |
-| **UI** | Qt Widgets | React moderno |
-| **Bundle size** | Grande (Python) | Más compacto |
-| **Editor CSV** | Externo | Integrado |
-| **Plantillas** | No | Sí |
+See [CHANGELOG.md](CHANGELOG.md) for version history.
 
-## 👤 Autor
+## 👤 Author
 
 **Hector David Rubio Tabares**
 
 ---
 
-⚡ Powered by Playwright - Automatización web de nueva generación
+⚡ Powered by Playwright - Next-generation web automation
