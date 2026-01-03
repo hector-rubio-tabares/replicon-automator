@@ -2,9 +2,9 @@
 
 🚀 **Modern desktop app to automate time entry in Replicon**
 
-[![Version](https://img.shields.io/badge/version-3.1.0-blue.svg)](https://github.com/hector-rubio-tabares/replicon-automator/releases)
+[![Version](https://img.shields.io/github/v/release/hector-rubio-tabares/replicon-automator?label=version&color=blue)](https://github.com/hector-rubio-tabares/replicon-automator/releases/latest)
 [![Node](https://img.shields.io/badge/node-22.14.0-green.svg)](https://nodejs.org/)
-[![Electron](https://img.shields.io/badge/electron-28-purple.svg)](https://www.electronjs.org/)
+[![Electron](https://img.shields.io/badge/electron-39-purple.svg)](https://www.electronjs.org/)
 
 ## ✨ Features
 
@@ -79,7 +79,7 @@ Press `F5` to start debugging with breakpoints. The debug configuration:
 
 | Technology | Usage |
 |------------|-------|
-| Electron 28 | Desktop app framework |
+| Electron 39 | Desktop app framework |
 | React 18 | Renderer UI |
 | TypeScript | Type safety |
 | Tailwind CSS | Styling |
