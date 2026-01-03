@@ -1,1 +1,5 @@
-export type { ConfigTabProps } from './config/ConfigTab.types';export type { CSVEditorTabProps } from './csv-editor/CSVEditorTab.types';export * from './scheduler';export type { ScheduledTask } from '@/hooks/useScheduler';
+// Re-export from pages for backwards compatibility
+export type { ConfigTabProps } from '../pages/ConfigPage/ConfigTab.types';
+export type { CSVEditorTabProps } from '../pages/CSVEditorPage/CSVEditorTab.types';
+export * from '../pages/SchedulerPage';
+export type { ScheduledTask } from '@/hooks/useScheduler';

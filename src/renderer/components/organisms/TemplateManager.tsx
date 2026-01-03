@@ -1,0 +1,1 @@
+export { TemplateManager, TemplateSelector, default } from '@/components/templates/TemplateManager';

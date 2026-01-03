@@ -18,10 +18,11 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["src/renderer/*"],
-      "@shared/*": ["src/shared/*"]
+      "@common/*": ["src/common/*"],
+      "@shared/*": ["src/common/*"]
     },
     "types": ["vite/client"]
   },
-  "include": ["src/renderer/**/*", "src/shared/**/*"],
+  "include": ["src/renderer/**/*", "src/common/**/*"],
   "exclude": ["dist", "node_modules"]
 }

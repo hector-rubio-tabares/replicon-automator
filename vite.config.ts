@@ -19,11 +19,41 @@ export default defineConfig(({ mode }) => {
   build: {
     outDir: '../../dist/renderer',
     emptyOutDir: true,
+    chunkSizeWarningLimit: 1000, // 1MB is acceptable for Electron apps (local loading)
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            if (id.includes('react') || id.includes('react-dom') || id.includes('scheduler')) {
+              return 'vendor-react';
+            }
+            if (id.includes('zustand')) {
+              return 'vendor-state';
+            }
+            if (id.includes('date-holidays')) {
+              return 'vendor-holidays';
+            }
+            if (id.includes('date-fns')) {
+              return 'vendor-dates';
+            }
+            if (id.includes('papaparse')) {
+              return 'vendor-csv';
+            }
+            if (id.includes('zod')) {
+              return 'vendor-validation';
+            }
+            // Keep other node_modules separate
+            return 'vendor';
+          }
+        },
+      },
+    },
   },
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src/renderer'),
-      '@shared': path.resolve(__dirname, './src/shared'),
+      '@common': path.resolve(__dirname, './src/common'),
+      '@shared': path.resolve(__dirname, './src/common'),
     },
   },
   server: {

@@ -1,1 +1,0 @@
-export { TemplateManager, TemplateSelector, default } from './templates/TemplateManager';

@@ -13,8 +13,10 @@
     "rootDir": "src",
     "baseUrl": ".",
     "paths": {
-      "@shared/*": ["src/shared/*"]
+      "@main/*": ["src/main/*"],
+      "@common/*": ["src/common/*"],
+      "@shared/*": ["src/common/*"]
     }
   },
-  "include": ["src/main/**/*", "src/shared/**/*"]
+  "include": ["src/main/**/*", "src/common/**/*"]
 }

@@ -1,21 +1,39 @@
-import { contextBridge, ipcRenderer } from 'electron';
+import { contextBridge, ipcRenderer, IpcRendererEvent } from 'electron';
 import type { 
   StartAutomationRequest, 
   Credentials, 
   CSVRow, 
   AutomationProgress,
   LogEntry 
-} from '../shared/types';
+} from '../common/types';
+
+// Helper para crear listeners seguros sin memory leaks
+function createSafeListener<T>(
+  channel: string,
+  callback: (data: T) => void
+): () => void {
+  const handler = (_event: IpcRendererEvent, data: T) => callback(data);
+  ipcRenderer.on(channel, handler);
+  return () => ipcRenderer.removeListener(channel, handler);
+}
+
 contextBridge.exposeInMainWorld('electronAPI', {
+  // CSV Operations
   loadCSV: () => ipcRenderer.invoke('csv:load'),
   saveCSV: (data: CSVRow[]) => ipcRenderer.invoke('csv:save', data),
+  
+  // Credentials
   saveCredentials: (credentials: Credentials) => 
     ipcRenderer.invoke('credentials:save', credentials),
   loadCredentials: () => ipcRenderer.invoke('credentials:load'),
   clearCredentials: () => ipcRenderer.invoke('credentials:clear'),
+  
+  // Config
   getConfig: (key: string) => ipcRenderer.invoke('config:get', key),
   setConfig: (key: string, value: unknown) => 
     ipcRenderer.invoke('config:set', key, value),
+  
+  // Automation
   startAutomation: (request: StartAutomationRequest) => 
     ipcRenderer.invoke('automation:start', request),
   stopAutomation: () => ipcRenderer.invoke('automation:stop'),
@@ -24,6 +42,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.invoke('automation:validate', data),
   dryRunAutomation: (data: { csvData: CSVRow[]; mappings: Record<string, string>; horarios: Record<string, unknown>; config: Record<string, unknown> }) =>
     ipcRenderer.invoke('automation:dryRun', data),
+  
+  // Checkpoints
   saveCheckpoint: (checkpoint: { automationId: string; currentRowIndex: number; processedRows: number[]; state: Record<string, unknown> }) =>
     ipcRenderer.invoke('automation:saveCheckpoint', checkpoint),
   loadCheckpoint: (automationId: string) =>
@@ -36,43 +56,43 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.invoke('automation:clearCheckpoint', automationId),
   isEncryptionAvailable: () =>
     ipcRenderer.invoke('automation:isEncryptionAvailable'),
+  
+  // App & Updates
   getAppVersion: () => ipcRenderer.invoke('app:version'),
   checkForUpdates: () => ipcRenderer.invoke('app:check-updates'),
   downloadUpdate: () => ipcRenderer.invoke('app:download-update'),
   installUpdate: () => ipcRenderer.invoke('app:install-update'),
   isUpdateDownloaded: () => ipcRenderer.invoke('app:is-update-downloaded'),
-  onUpdateProgress: (callback: (progress: { percent: number; bytesPerSecond: number; transferred: number; total: number }) => void) => {
-    ipcRenderer.on('update-download-progress', (_, progress) => callback(progress));
-    return () => ipcRenderer.removeAllListeners('update-download-progress');
-  },
-  onUpdateDownloaded: (callback: (info: { version: string }) => void) => {
-    ipcRenderer.on('update-downloaded', (_, info) => callback(info));
-    return () => ipcRenderer.removeAllListeners('update-downloaded');
-  },
+  
+  // Event Listeners (usando helper seguro para evitar memory leaks)
+  onUpdateProgress: (callback: (progress: { percent: number; bytesPerSecond: number; transferred: number; total: number }) => void) =>
+    createSafeListener('update-download-progress', callback),
+  
+  onUpdateDownloaded: (callback: (info: { version: string }) => void) =>
+    createSafeListener('update-downloaded', callback),
+  
   onUpdateError: (callback: () => void) => {
-    ipcRenderer.on('update-error', () => callback());
-    return () => ipcRenderer.removeAllListeners('update-error');
+    const handler = () => callback();
+    ipcRenderer.on('update-error', handler);
+    return () => ipcRenderer.removeListener('update-error', handler);
   },
-  onAutomationProgress: (callback: (progress: AutomationProgress) => void) => {
-    ipcRenderer.on('automation:progress', (_, progress) => callback(progress));
-    return () => ipcRenderer.removeAllListeners('automation:progress');
-  },
-  onAutomationLog: (callback: (log: LogEntry) => void) => {
-    ipcRenderer.on('automation:log', (_, log) => callback(log));
-    return () => ipcRenderer.removeAllListeners('automation:log');
-  },
-  onAutomationComplete: (callback: (result: { success: boolean }) => void) => {
-    ipcRenderer.on('automation:complete', (_, result) => callback(result));
-    return () => ipcRenderer.removeAllListeners('automation:complete');
-  },
-  onAutomationError: (callback: (error: { error: string }) => void) => {
-    ipcRenderer.on('automation:error', (_, error) => callback(error));
-    return () => ipcRenderer.removeAllListeners('automation:error');
-  },
-  onMainLog: (callback: (log: { level: string; message: string }) => void) => {
-    ipcRenderer.on('main:log', (_, log) => callback(log));
-    return () => ipcRenderer.removeAllListeners('main:log');
-  },
+  
+  onAutomationProgress: (callback: (progress: AutomationProgress) => void) =>
+    createSafeListener('automation:progress', callback),
+  
+  onAutomationLog: (callback: (log: LogEntry) => void) =>
+    createSafeListener('automation:log', callback),
+  
+  onAutomationComplete: (callback: (result: { success: boolean }) => void) =>
+    createSafeListener('automation:complete', callback),
+  
+  onAutomationError: (callback: (error: { error: string }) => void) =>
+    createSafeListener('automation:error', callback),
+  
+  onMainLog: (callback: (log: { level: string; message: string }) => void) =>
+    createSafeListener('main:log', callback),
+  
+  // Send logs to main
   sendLogToMain: (level: string, source: string, message: string) => {
     ipcRenderer.send('renderer:log', { level, source, message });
   },

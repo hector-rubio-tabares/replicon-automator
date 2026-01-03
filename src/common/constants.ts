@@ -3,6 +3,25 @@ export const DEFAULT_HORARIOS = [
   { id: '2', start_time: '2:00pm', end_time: '4:00pm' },
 ];
 
+/**
+ * Timeouts para operaciones de Playwright (en milisegundos)
+ * Centralizados para mantenibilidad y consistencia
+ */
+export const PLAYWRIGHT_TIMEOUTS = {
+  /** Timeout para MFA verification */
+  MFA_CHECK: 5000,
+  /** Timeout para esperar página nueva */
+  NEW_PAGE: 30000,
+  /** Timeout para elementos de UI normales */
+  ELEMENT: 30000,
+  /** Timeout largo para login/auth */
+  AUTH: 60000,
+  /** Delay entre acciones de Playwright */
+  SLOW_MO: 50,
+  /** Delay para polling cuando está pausado */
+  PAUSE_POLL: 500,
+} as const;
+
 export const SPECIAL_ACCOUNTS = {
   VACATION: ['H', 'F'],
   NO_WORK: ['BH'],

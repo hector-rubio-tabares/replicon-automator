@@ -6,7 +6,7 @@ import { PlaywrightAutomation } from './services';
 import { setupIPCHandlers } from './controllers';
 import { closeBrowser } from './services/automation-enhanced.service';
 import { updaterService } from './services/updater.service';
-import { DEFAULT_MAPPINGS, DEFAULT_HORARIOS, DEFAULT_CONFIG } from '../shared/constants';
+import { DEFAULT_MAPPINGS, DEFAULT_HORARIOS, DEFAULT_CONFIG } from '../common/constants';
 import { setupDevLogger, setMainWindowForLogs } from './utils/dev-logger';
 const store = new Store<Record<string, unknown>>({
   defaults: {
@@ -38,7 +38,8 @@ function createWindow(): void {
       nodeIntegration: false,
       contextIsolation: true,
       preload: path.join(__dirname, 'preload.js'),
-      devTools: true,
+      devTools: isDev,
+      sandbox: true, // Seguridad adicional
     },
     icon: appIcon || iconPath,
     titleBarStyle: 'default',
