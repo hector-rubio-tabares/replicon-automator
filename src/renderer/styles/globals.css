@@ -12,30 +12,24 @@
    THEME TRANSITION SYSTEM - Smooth & Uniform
    ═══════════════════════════════════════════════════════════ */
 
-/* Base transition for theme changes */
+/* Base transition for theme changes - Ultra smooth */
 :root {
-  --theme-transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  --theme-transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Apply smooth transitions to all theme-aware elements */
-body,
-.card,
-.btn,
-.tab,
-.glass,
-input,
-select,
-textarea,
-[class*="bg-"],
-[class*="text-"],
-[class*="border-"] {
+/* Apply smooth transitions to ALL theme-aware elements */
+*,
+*::before,
+*::after {
   transition: 
     background-color var(--theme-transition),
     background var(--theme-transition),
     color var(--theme-transition),
     border-color var(--theme-transition),
     box-shadow var(--theme-transition),
-    opacity var(--theme-transition);
+    opacity var(--theme-transition),
+    fill var(--theme-transition),
+    stroke var(--theme-transition);
 }
 
 /* Light mode (default) */

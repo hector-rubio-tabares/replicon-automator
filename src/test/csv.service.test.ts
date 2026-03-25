@@ -25,7 +25,7 @@ JM,PR,EXT/AV:MS:1000:1200`;
 
       expect(result.success).toBe(true);
       expect(result.data).toHaveLength(2);
-      expect(result.data?.[0]).toEqual({ cuenta: 'AV', proyecto: 'MS', extras: '' });
+      expect(result.data?.[0]).toEqual({ cuenta: 'AV', extras: '' });
     });
 
     it('should handle file read error', () => {
@@ -91,8 +91,8 @@ AV,MS,`;
   describe('saveCSV', () => {
     it('should save CSV successfully', () => {
       const data: CSVRow[] = [
-        { cuenta: 'AV', proyecto: 'MS', extras: '' },
-        { cuenta: 'JM', proyecto: 'PR', extras: 'EXT/AV:MS:1000:1200' },
+        { cuenta: 'AV', extras: '' },
+        { cuenta: 'JM', extras: 'EXT/AV:MS:1000:1200' },
       ];
 
       const result = service.saveCSV('/path/to/output.csv', data);
@@ -129,12 +129,11 @@ AV,MS,`;
       const csvContent = writeCall[1] as string;
 
       expect(csvContent).toContain('Cuenta');
-      expect(csvContent).toContain('Projecto');
       expect(csvContent).toContain('Extras');
     });
 
     it('should handle empty extras field', () => {
-      const data: CSVRow[] = [{ cuenta: 'AV', proyecto: 'MS', extras: '' }];
+      const data: CSVRow[] = [{ cuenta: 'AV', extras: '' }];
 
       const result = service.saveCSV('/path/to/output.csv', data);
 
@@ -147,8 +146,8 @@ AV,MS,`;
   describe('generateFromTemplate', () => {
     it('should generate rows from template', () => {
       const template: CSVRow[] = [
-        { cuenta: 'AV', proyecto: 'MS', extras: '' },
-        { cuenta: 'JM', proyecto: 'PR', extras: '' },
+        { cuenta: 'AV', extras: '' },
+        { cuenta: 'JM', extras: '' },
       ];
 
       const result = service.generateFromTemplate(template, 5);

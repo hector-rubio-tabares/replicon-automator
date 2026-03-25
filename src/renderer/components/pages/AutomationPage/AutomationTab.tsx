@@ -1,6 +1,5 @@
 import type { Credentials, CSVRow, AutomationProgress, LogEntry } from '@shared/types';
 import { LogsCompact } from '../../organisms/LogsCompact';
-import { ExecutionHistoryCompact } from '../../organisms/ExecutionHistory';
 import { useTranslation } from '@/i18n';
 import { useState } from 'react';
 interface AutomationTabProps {
@@ -185,7 +184,6 @@ export default function AutomationTab({
                       <tr>
                         <th className="text-left py-1">{t('csv.columns.date')}</th>
                         <th className="text-left py-1">{t('automation.accounts')}</th>
-                        <th className="text-left py-1">{t('csv.columns.project')}</th>
                         <th className="text-left py-1">{t('csvEditor.extras')}</th>
                       </tr>
                     </thead>
@@ -194,7 +192,6 @@ export default function AutomationTab({
                         <tr key={index} className="text-gray-700 dark:text-slate-300">
                           <td className="py-1">{index + 1}</td>
                           <td className="py-1">{row.cuenta}</td>
-                          <td className="py-1">{row.proyecto}</td>
                           <td className="py-1 text-gray-500 dark:text-slate-500">
                             {row.extras || '-'}
                           </td>
@@ -307,7 +304,6 @@ export default function AutomationTab({
           <div className="flex-1 min-h-0">
             <LogsCompact logs={logs} />
           </div>
-          <ExecutionHistoryCompact />
         </div>
       </div>
     </div>

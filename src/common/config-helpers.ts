@@ -1,1 +1,19 @@
-import type { AccountMappings, TimeSlot } from './types';export function addHorario(horarios: TimeSlot[], slot: TimeSlot): TimeSlot[] {  return [...horarios, slot];}export function removeHorario(horarios: TimeSlot[], id: string): TimeSlot[] {  return horarios.filter((h) => h.id !== id);}export function updateHorario(  horarios: TimeSlot[],  id: string,  field: 'start_time' | 'end_time',  value: string,): TimeSlot[] {  return horarios.map((h) => (h.id === id ? { ...h, [field]: value } : h));}export function addAccount(  mappings: AccountMappings,  accountCode: string,  accountName: string,): AccountMappings {  const code = accountCode.trim().toUpperCase();  const name = accountName.trim();  if (!code || !name) return mappings;  return {    ...mappings,    [code]: {      name,      projects: {},    },  };}export function removeAccount(mappings: AccountMappings, code: string): AccountMappings {  const next = { ...mappings };  delete next[code];  return next;}export function addProject(  mappings: AccountMappings,  accountCode: string,  projectCode: string,  projectName: string,): AccountMappings {  const account = mappings[accountCode];  if (!account) return mappings;  const projCode = projectCode.trim().toUpperCase();  const projName = projectName;  if (!projCode) return mappings;  return {    ...mappings,    [accountCode]: {      ...account,      projects: {        ...account.projects,        [projCode]: projName,      },    },  };}
+import type { TimeSlot } from './types';
+
+// Funciones para gestión de horarios
+export function addHorario(horarios: TimeSlot[], slot: TimeSlot): TimeSlot[] {
+  return [...horarios, slot];
+}
+
+export function removeHorario(horarios: TimeSlot[], id: string): TimeSlot[] {
+  return horarios.filter((h) => h.id !== id);
+}
+
+export function updateHorario(
+  horarios: TimeSlot[],
+  id: string,
+  field: 'start_time' | 'end_time',
+  value: string,
+): TimeSlot[] {
+  return horarios.map((h) => (h.id === id ? { ...h, [field]: value } : h));
+}

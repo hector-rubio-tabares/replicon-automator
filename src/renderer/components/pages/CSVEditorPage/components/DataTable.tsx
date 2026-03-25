@@ -1,1 +1,121 @@
-import { memo, useMemo } from 'react';import type { CSVRow, AccountMappings } from '@shared/types';import type { DayInfo, ParseExtResult } from '../CSVEditorTab.types';import { MONTHS_ES } from '../CSVEditorTab.constants';import { useTranslation } from '@/i18n';import DataTableRow from './DataTableRow';export interface DataTableProps {  data: CSVRow[];  dayInfo: DayInfo[] | null;  mappings: AccountMappings;  selectedMonthIndex: number;  selectedYear: number;  daysInSelectedMonth: number;  parseExtString: (extras: string) => ParseExtResult;  onUpdateRow: (index: number, field: keyof CSVRow, value: string) => void;  onRemoveRow: (index: number) => void;  onOpenExtEditor: (index: number) => void;  onConfigureManually: (index: number) => void;  onAddRow: () => void;  onClearTable: () => void;}const DataTable = memo(function DataTable({  data,  dayInfo,  mappings,  selectedMonthIndex,  selectedYear,  daysInSelectedMonth,  parseExtString,  onUpdateRow,  onRemoveRow,  onOpenExtEditor,  onConfigureManually,  onAddRow,  onClearTable,}: DataTableProps) {  const { t } = useTranslation();  const selectedMonthLabel = MONTHS_ES[selectedMonthIndex];  const accountCodes = useMemo(() => Object.keys(mappings), [mappings]);  const hasData = data.length > 0;  return (    <div className="card">      {}      <div className="flex justify-between items-center mb-4">        <h2 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">          <span className="text-2xl">📝</span>          {t('csvEditor.dataEditor')} ({daysInSelectedMonth} {t('csvEditor.days')}) — {selectedMonthLabel} {selectedYear}        </h2>        <div className="flex gap-2">          <button            onClick={onClearTable}            className="btn btn-secondary text-sm"            disabled={!hasData}            title={t('csvEditor.clearTableTooltip')}            aria-label={t('csvEditor.clearTable')}          >            🧹 {t('csvEditor.clearTable')}          </button>          <button            onClick={onAddRow}            className="btn btn-success text-sm"            aria-label={t('csvEditor.addRow')}          >            + {t('csvEditor.addRow')}          </button>        </div>      </div>      {}      <div className="overflow-auto rounded-lg border border-gray-200 dark:border-slate-700">        <table className="w-full" role="grid" aria-label={t('csvEditor.dataEditor')}>          <thead className="bg-gray-100 dark:bg-dark-200 sticky top-0">            <tr className="text-gray-600 dark:text-slate-400 text-sm">              <th className="py-3 px-4 text-left w-16">{t('csvEditor.day')}</th>              <th className="py-3 px-4 text-left w-32">{t('csvEditor.date')}</th>              <th className="py-3 px-4 text-left">{t('csvEditor.account')}</th>              <th className="py-3 px-4 text-left">{t('csvEditor.project')}</th>              <th className="py-3 px-4 text-left">                <div className="flex items-center gap-2">                  <span>{t('csvEditor.extras')}</span>                  <span                    className="text-gray-400 dark:text-slate-500 cursor-help"                    title={t('csvEditor.extrasTooltip')}                    aria-label={t('csvEditor.extras')}                  >                    ℹ️                  </span>                </div>              </th>              <th className="py-3 px-4 text-center w-20">{t('csvEditor.actions')}</th>            </tr>          </thead>          <tbody>            {hasData ? (              data.map((row, index) => (                <DataTableRow                  key={index}                  index={index}                  row={row}                  dayInfo={dayInfo?.[index] ?? null}                  mappings={mappings}                  accountCodes={accountCodes}                  parseExtString={parseExtString}                  onUpdateRow={onUpdateRow}                  onRemoveRow={onRemoveRow}                  onOpenExtEditor={onOpenExtEditor}                  onConfigureManually={onConfigureManually}                />              ))            ) : (              <tr>                <td colSpan={6} className="py-8 text-center text-gray-500 dark:text-slate-500">                  {t('csvEditor.noRows')}. {t('csvEditor.addFirst')}                </td>              </tr>            )}          </tbody>        </table>      </div>    </div>  );});export default DataTable;
+import { memo, useMemo } from 'react';
+import type { CSVRow, AccountMappings } from '@shared/types';
+import type { DayInfo, ParseExtResult } from '../CSVEditorTab.types';
+import { MONTHS_ES } from '../CSVEditorTab.constants';
+import { useTranslation } from '@/i18n';
+import DataTableRow from './DataTableRow';
+export interface DataTableProps {
+  data: CSVRow[];
+  dayInfo: DayInfo[] | null;
+  mappings: AccountMappings;
+  selectedMonthIndex: number;
+  selectedYear: number;
+  daysInSelectedMonth: number;
+  parseExtString: (extras: string) => ParseExtResult;
+  onUpdateRow: (index: number, field: keyof CSVRow, value: string) => void;
+  onRemoveRow: (index: number) => void;
+  onOpenExtEditor: (index: number) => void;
+  onConfigureManually: (index: number) => void;
+  onAddRow: () => void;
+  onClearTable: () => void;
+}
+const DataTable = memo(function DataTable({
+  data,
+  dayInfo,
+  mappings,
+  selectedMonthIndex,
+  selectedYear,
+  daysInSelectedMonth,
+  parseExtString,
+  onUpdateRow,
+  onRemoveRow,
+  onOpenExtEditor,
+  onConfigureManually,
+  onAddRow,
+  onClearTable,
+}: DataTableProps) {
+  const { t } = useTranslation();
+  const selectedMonthLabel = MONTHS_ES[selectedMonthIndex];
+  const accountCodes = useMemo(() => Object.keys(mappings), [mappings]);
+  const hasData = data.length > 0;
+  return (
+    <div className="card">
+      {}
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+          <span className="text-2xl">📝</span>
+          {t('csvEditor.dataEditor')} ({daysInSelectedMonth} {t('csvEditor.days')}) — {selectedMonthLabel} {selectedYear}
+        </h2>
+        <div className="flex gap-2">
+          <button
+            onClick={onClearTable}
+            className="btn btn-secondary text-sm"
+            disabled={!hasData}
+            title={t('csvEditor.clearTableTooltip')}
+            aria-label={t('csvEditor.clearTable')}
+          >
+            🧹 {t('csvEditor.clearTable')}
+          </button>
+          <button
+            onClick={onAddRow}
+            className="btn btn-success text-sm"
+            aria-label={t('csvEditor.addRow')}
+          >
+            + {t('csvEditor.addRow')}
+          </button>
+        </div>
+      </div>
+      {}
+      <div className="overflow-auto rounded-lg border border-gray-200 dark:border-slate-700">
+        <table className="w-full" role="grid" aria-label={t('csvEditor.dataEditor')}>
+          <thead className="bg-gray-100 dark:bg-dark-200 sticky top-0">
+            <tr className="text-gray-600 dark:text-slate-400 text-sm">
+              <th className="py-3 px-4 text-left w-16">{t('csvEditor.day')}</th>
+              <th className="py-3 px-4 text-left w-32">{t('csvEditor.date')}</th>
+              <th className="py-3 px-4 text-left">{t('csvEditor.account')}</th>
+              <th className="py-3 px-4 text-left">
+                <div className="flex items-center gap-2">
+                  <span>{t('csvEditor.extras')}</span>
+                  <span
+                    className="text-gray-400 dark:text-slate-500 cursor-help"
+                    title={t('csvEditor.extrasTooltip')}
+                    aria-label={t('csvEditor.extras')}
+                  >
+                    ℹ️
+                  </span>
+                </div>
+              </th>
+              <th className="py-3 px-4 text-center w-20">{t('csvEditor.actions')}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {hasData ? (
+              data.map((row, index) => (
+                <DataTableRow
+                  key={index}
+                  index={index}
+                  row={row}
+                  dayInfo={dayInfo?.[index] ?? null}
+                  mappings={mappings}
+                  accountCodes={accountCodes}
+                  parseExtString={parseExtString}
+                  onUpdateRow={onUpdateRow}
+                  onRemoveRow={onRemoveRow}
+                  onOpenExtEditor={onOpenExtEditor}
+                  onConfigureManually={onConfigureManually}
+                />
+              ))
+            ) : (
+              <tr>
+                <td colSpan={6} className="py-8 text-center text-gray-500 dark:text-slate-500">
+                  {t('csvEditor.noRows')}. {t('csvEditor.addFirst')}
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+});
+export default DataTable;

@@ -1,14 +1,11 @@
-import type { AccountMappings, CSVRow } from '@shared/types';
-import { SPECIAL_ACCOUNTS } from '@shared/constants';
-import type { ExtDraftEntry } from './CSVEditorTab.types';
-export function isSpecialAccountCode(code: string): boolean {
-  const upper = code.trim().toUpperCase();
-  return (
-    SPECIAL_ACCOUNTS.VACATION.includes(upper) ||
-    SPECIAL_ACCOUNTS.NO_WORK.includes(upper) ||
-    SPECIAL_ACCOUNTS.WEEKEND.includes(upper)
-  );
-}
+import type { CSVRow } from '@shared/types';
+import { pad2, isSpecialAccountCode } from '@shared/utils';
+import type { ExtDraftEntry, DayInfo } from './CSVEditorTab.types';
+import { DOW_ES } from './CSVEditorTab.constants';
+
+// Re-export para compatibilidad con código existente
+export { isSpecialAccountCode };
+
 export function isValidMilitary(value: string): boolean {
   if (!/^\d{4}$/.test(value)) return false;
   const hh = Number(value.slice(0, 2));
@@ -20,49 +17,35 @@ export function isValidMilitary(value: string): boolean {
 }
 export function parseExtString(
   extras: string,
-  mappings: AccountMappings,
 ): { entries: ExtDraftEntry[]; error: string | null } {
   const trimmed = (extras ?? '').trim();
   if (!trimmed) return { entries: [], error: null };
-  if (!trimmed.startsWith('EXT/')) {
-    return { entries: [], error: 'Extras debe iniciar con EXT/' };
-  }
-  const rest = trimmed.slice(4);
-  if (!rest.trim()) return { entries: [], error: 'Completa el contenido después de EXT/' };
-  const parts = rest
+  const parts = trimmed
     .split(';')
     .map((p) => p.trim())
     .filter(Boolean);
   const entries: ExtDraftEntry[] = [];
   for (const part of parts) {
-    const components = part.split(':').map((c) => c.trim());
-    if (components.length < 4) {
-      return { entries: [], error: 'Formato inválido: cuenta:proyecto:inicio:fin' };
+    const components = part.split('-').map((c) => c.trim());
+    if (components.length !== 2) {
+      return { entries: [], error: 'Formato inválido: inicio-fin (ej: 0900-1100)' };
     }
-    const [cuenta, proyecto, inicio, fin] = components;
-    if (!cuenta) return { entries: [], error: 'Cuenta (EXT) requerida' };
-    if (!mappings[cuenta]) return { entries: [], error: `Cuenta (EXT) no existe: ${cuenta}` };
-    if (!proyecto) return { entries: [], error: 'Proyecto (EXT) requerido' };
+    const [inicio, fin] = components;
     if (!isValidMilitary(inicio)) return { entries: [], error: `Hora inicio inválida: ${inicio}` };
     if (!isValidMilitary(fin)) return { entries: [], error: `Hora fin inválida: ${fin}` };
-    entries.push({ cuenta, proyecto, inicio, fin });
+    entries.push({ inicio, fin });
   }
   return { entries, error: null };
 }
 export function buildExtString(entries: ExtDraftEntry[]): string {
   const clean = entries
     .map((e) => ({
-      cuenta: e.cuenta.trim().toUpperCase(),
-      proyecto: e.proyecto.trim().toUpperCase(),
       inicio: e.inicio.trim(),
       fin: e.fin.trim(),
     }))
-    .filter((e) => e.cuenta || e.proyecto || e.inicio || e.fin);
+    .filter((e) => e.inicio || e.fin);
   if (clean.length === 0) return '';
-  const first = clean[0];
-  const rest = clean.slice(1);
-  const tail = rest.map((e) => `${e.cuenta}:${e.proyecto}:${e.inicio}:${e.fin}`).join(';');
-  return `EXT/${first.cuenta}:${first.proyecto}:${first.inicio}:${first.fin}${tail ? `;${tail}` : ''}`;
+  return clean.map((e) => `${e.inicio}-${e.fin}`).join(';');
 }
 export async function computeHolidaySet(year: number): Promise<Set<string>> {
   const holidaySet = new Set<string>();
@@ -88,12 +71,43 @@ export function escapeCsvCell(value: string): string {
   return raw;
 }
 export function buildCsvText(rows: CSVRow[] | null): string {
-  const header = 'Cuenta,Projecto,Extras';
+  const header = 'Estado,Extras';
   const body = (rows ?? []).map((r) => {
     const cuenta = escapeCsvCell((r.cuenta ?? '').trim());
-    const proyecto = escapeCsvCell((r.proyecto ?? '').trim());
     const extras = escapeCsvCell((r.extras ?? '').trim());
-    return `${cuenta},${proyecto},${extras}`;
+    return `${cuenta},${extras}`;
   });
   return [header, ...body].join('\n');
+}
+
+/**
+ * Calcula información de días para un mes específico
+ * DRY: Un solo lugar para la lógica de fechas
+ */
+export async function computeDayInfo(
+  year: number,
+  monthIndex: number,
+  daysInMonth: number
+): Promise<DayInfo[]> {
+  const monthNumber = monthIndex + 1;
+  const holidaySet = await computeHolidaySet(year);
+  const info: DayInfo[] = [];
+  
+  for (let d = 1; d <= daysInMonth; d++) {
+    const day = new Date(year, monthIndex, d);
+    const dayOfWeek = day.getDay();
+    const dayKey = `${year}-${pad2(monthNumber)}-${pad2(d)}`;
+    const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+    const isHoliday = holidaySet.has(dayKey);
+    
+    info.push({
+      date: dayKey,
+      dayNumber: d,
+      dowLabel: DOW_ES[dayOfWeek] ?? '',
+      isWeekend,
+      isHoliday,
+    });
+  }
+  
+  return info;
 }

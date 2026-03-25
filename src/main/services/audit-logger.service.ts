@@ -1,43 +1,16 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { app } from 'electron';
-import { productionLogger } from '../utils/production-logger';
+import { productionLogger } from '../utils/production-logger.js';
 import * as crypto from 'crypto';
-export type AuditAction =
-  | 'APP_START'
-  | 'APP_CLOSE'
-  | 'LOGIN_ATTEMPT'
-  | 'LOGIN_SUCCESS'
-  | 'LOGIN_FAILURE'
-  | 'AUTOMATION_START'
-  | 'AUTOMATION_COMPLETE'
-  | 'AUTOMATION_FAILED'
-  | 'AUTOMATION_STOPPED'
-  | 'CONFIG_CHANGED'
-  | 'CONFIG_EXPORTED'
-  | 'CONFIG_IMPORTED'
-  | 'ACCOUNT_ADDED'
-  | 'ACCOUNT_MODIFIED'
-  | 'ACCOUNT_DELETED'
-  | 'CSV_LOADED'
-  | 'CSV_SAVED'
-  | 'CSV_MODIFIED'
-  | 'CREDENTIALS_ACCESSED'
-  | 'CREDENTIALS_MODIFIED'
-  | 'THEME_CHANGED'
-  | 'LANGUAGE_CHANGED'
-  | 'ERROR_OCCURRED'
-  | 'SCREENSHOT_CAPTURED';
-export interface AuditEntry {
-  id: string;
-  timestamp: string;
-  action: AuditAction;
-  details: Record<string, unknown>;
-  userId?: string;
-  sessionId: string;
-  ipAddress?: string;
-  userAgent?: string;
-}
+import type { AuditAction, AuditEntry } from '../domain/audit/types.js';
+
+/**
+ * Servicio de auditoría para logging de acciones críticas.
+ * 
+ * @singleton - Mantiene sessionId, logDir y currentLogFile compartidos.
+ * Exportado como singleton para garantizar logs consistentes en toda la app.
+ */
 class AuditLoggerService {
   private sessionId: string;
   private logDir: string;
@@ -187,6 +160,8 @@ class AuditLoggerService {
     return this.logDir;
   }
 }
+
+// Export singleton instance - Patrón B estándar
 export const auditLogger = new AuditLoggerService();
 export const logAudit = (action: AuditAction, details?: Record<string, unknown>, userId?: string) => {
   auditLogger.log(action, details, userId);

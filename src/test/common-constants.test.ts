@@ -96,45 +96,20 @@ describe('Constants', () => {
   describe('DEFAULT_MAPPINGS', () => {
     it('should have BH mapping', () => {
       expect(DEFAULT_MAPPINGS.BH).toBeDefined();
-      expect(DEFAULT_MAPPINGS.BH.name).toBe('No work');
+      expect(DEFAULT_MAPPINGS.BH).toBe('No work');
     });
 
     it('should have vacation mappings', () => {
-      expect(DEFAULT_MAPPINGS.H.name).toBe('Vacation');
-      expect(DEFAULT_MAPPINGS.F.name).toBe('Vacation');
+      expect(DEFAULT_MAPPINGS.H).toBe('Vacation');
+      expect(DEFAULT_MAPPINGS.F).toBe('Vacation');
     });
 
-    it('should have Avianca mapping with projects', () => {
-      expect(DEFAULT_MAPPINGS.AV.name).toBe('Avianca');
-      expect(DEFAULT_MAPPINGS.AV.projects.MS).toBe('Avianca-Services-AM');
-      expect(DEFAULT_MAPPINGS.AV.projects.PR).toBe('Avianca-Services-Projects');
-    });
-
-    it('should have Jambojet mapping', () => {
-      expect(DEFAULT_MAPPINGS.JM.name).toBe('Jambojet');
-      expect(DEFAULT_MAPPINGS.JM.projects).toBeDefined();
-    });
-
-    it('should have Newshore PROD mapping', () => {
-      expect(DEFAULT_MAPPINGS.PROD.name).toBe('Newshore (Product)');
-      expect(DEFAULT_MAPPINGS.PROD.projects.IN).toBe('Engineering');
-      expect(DEFAULT_MAPPINGS.PROD.projects.PI).toBe('Platform-Integrations');
-    });
-
-    it('should have Plus Ultra mapping', () => {
-      expect(DEFAULT_MAPPINGS.PU.name).toBe('Plus Ultra');
-      expect(DEFAULT_MAPPINGS.PU.projects.MS).toBe('PlusUltra- Services- AM');
-    });
-
-    it('should have TAAG Angola mapping', () => {
-      expect(DEFAULT_MAPPINGS.DT).toBeDefined();
-      expect(DEFAULT_MAPPINGS.DT.name).toBe('TAAGAngola');
-    });
-
-    it('should have Newshore internal mapping', () => {
-      expect(DEFAULT_MAPPINGS.NEW).toBeDefined();
-      expect(DEFAULT_MAPPINGS.NEW.name).toBe('Newshore (Interno)');
-    });
+    it.skip('should have Avianca mapping - REMOVED: Business mappings removed', () => {});
+    it.skip('should have Jambojet mapping - REMOVED', () => {});
+    it.skip('should have Newshore PROD mapping - REMOVED', () => {});
+    it.skip('should have Plus Ultra mapping - REMOVED', () => {});
+    it.skip('should have TAAG Angola mapping - REMOVED', () => {});
+    it.skip('should have Newshore internal mapping - REMOVED', () => {});
   });
 
   describe('CSV_TEMPLATES', () => {
@@ -154,12 +129,7 @@ describe('Constants', () => {
       expect(template?.rows[0].cuenta).toBe('H');
     });
 
-    it('should have mixed projects template', () => {
-      const template = CSV_TEMPLATES.find(t => t.id === 'mixed-projects');
-      
-      expect(template).toBeDefined();
-      expect(template?.rows).toHaveLength(7);
-    });
+    it.skip('should have mixed projects template - REMOVED: No project support', () => {});
 
     it('should have exactly 3 templates', () => {
       expect(CSV_TEMPLATES).toHaveLength(3);

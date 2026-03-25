@@ -15,7 +15,7 @@
                 "GitHub.copilot",
                 "GitHub.copilot-chat",
                 "bradlc.vscode-tailwindcss",
-                "vitest.explorer"
+            // // "vitest.explorer"
             ],
             "settings": {
                 "editor.formatOnSave": true,
@@ -40,7 +40,7 @@
         },
         "9229": {
             "label": "Node.js Debugger",
-            "onAutoForward": "silent"
+        // "onAutoForward": "silent"
         }
     },
     "hostRequirements": {

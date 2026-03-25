@@ -1,18 +1,20 @@
 import { Notification, nativeImage, app } from 'electron';
 import * as path from 'path';
-export interface NotificationOptions {
-  title: string;
-  body: string;
-  icon?: 'success' | 'error' | 'warning' | 'info';
-  silent?: boolean;
-  onClick?: () => void;
-}
+import type { NotificationOptions } from '../domain/notification/types.js';
+
 const ICON_PATHS: Record<string, string> = {
   success: 'success.png',
   error: 'error.png',
   warning: 'warning.png',
   info: 'info.png',
 };
+
+/**
+ * Servicio de notificaciones nativas de Electron.
+ * 
+ * @singleton - Mantiene caché de iconos compartido para optimizar recursos.
+ * Exportado como singleton para garantizar una única instancia y caché consistente.
+ */
 class NotificationService {
   private iconCache: Map<string, Electron.NativeImage> = new Map();
   show(options: NotificationOptions): Notification | null {
@@ -88,4 +90,6 @@ class NotificationService {
     return undefined;
   }
 }
+
+// Export singleton instance - Patrón B estándar
 export const notificationService = new NotificationService();

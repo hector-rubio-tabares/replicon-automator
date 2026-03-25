@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import type { CSVRow, AccountMappings } from '@shared/types';
+import type { CSVRow } from '@shared/types';
 import type { ExtDraftEntry } from '../components/pages/CSVEditorPage/CSVEditorTab.types';
 import { buildExtString, parseExtString as parseExtStringUtil } from '../components/pages/CSVEditorPage/CSVEditorTab.utils';
 export interface UseExtrasEditorReturn {
@@ -15,15 +15,15 @@ export interface UseExtrasEditorReturn {
   removeEntry: (index: number) => void;
   updateEntry: (index: number, field: keyof ExtDraftEntry, value: string) => void;
 }
-export function useExtrasEditor(mappings: AccountMappings): UseExtrasEditorReturn {
+export function useExtrasEditor(): UseExtrasEditorReturn {
   const [rowIndex, setRowIndex] = useState<number | null>(null);
   const [entries, setEntries] = useState<ExtDraftEntry[]>([
-    { cuenta: '', proyecto: '', inicio: '', fin: '' },
+    { inicio: '', fin: '' },
   ]);
   const [error, setError] = useState<string | null>(null);
   const parseExtString = useCallback(
-    (extras: string) => parseExtStringUtil(extras, mappings),
-    [mappings]
+    (extras: string) => parseExtStringUtil(extras),
+    []
   );
   const open = useCallback((index: number, currentExtras: string) => {
     const parsed = parseExtString(currentExtras);
@@ -31,7 +31,7 @@ export function useExtrasEditor(mappings: AccountMappings): UseExtrasEditorRetur
       setEntries(parsed.entries);
       setError(null);
     } else {
-      setEntries([{ cuenta: '', proyecto: '', inicio: '', fin: '' }]);
+      setEntries([{ inicio: '', fin: '' }]);
       setError(parsed.error);
     }
     setRowIndex(index);
@@ -52,7 +52,7 @@ export function useExtrasEditor(mappings: AccountMappings): UseExtrasEditorRetur
     close();
   }, [rowIndex, entries, parseExtString, close]);
   const addEntry = useCallback(() => {
-    setEntries((prev) => [...prev, { cuenta: '', proyecto: '', inicio: '', fin: '' }]);
+    setEntries((prev) => [...prev, { inicio: '', fin: '' }]);
   }, []);
   const removeEntry = useCallback((index: number) => {
     setEntries((prev) => prev.filter((_, i) => i !== index));

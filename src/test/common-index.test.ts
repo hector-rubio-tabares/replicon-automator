@@ -19,9 +19,7 @@ describe('Common Index Exports', () => {
     expect(typeof CommonIndex.addHorario).toBe('function');
     expect(typeof CommonIndex.removeHorario).toBe('function');
     expect(typeof CommonIndex.updateHorario).toBe('function');
-    expect(typeof CommonIndex.addAccount).toBe('function');
-    expect(typeof CommonIndex.removeAccount).toBe('function');
-    expect(typeof CommonIndex.addProject).toBe('function');
+    // Note: addAccount, removeAccount, addProject removed from exports
   });
 
   it('should have retry functions', () => {

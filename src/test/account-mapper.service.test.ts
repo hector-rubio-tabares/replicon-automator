@@ -8,20 +8,8 @@ describe('AccountMapperService', () => {
 
   beforeEach(() => {
     mappings = {
-      AV: {
-        name: 'AvantiCard',
-        projects: {
-          MS: 'Mantenimiento y Soporte',
-          DEV: 'Desarrollo',
-        },
-      },
-      JM: {
-        name: 'JM Services',
-        projects: {
-          PR: 'Proyectos',
-          CON: 'Consultoría',
-        },
-      },
+      AV: 'AvantiCard',
+      JM: 'JM Services',
     };
 
     service = new AccountMapperService(mappings);
@@ -36,10 +24,7 @@ describe('AccountMapperService', () => {
   describe('updateMappings', () => {
     it('should update mappings', () => {
       const newMappings: AccountMappings = {
-        NEW: {
-          name: 'New Account',
-          projects: {},
-        },
+        NEW: 'New Account',
       };
 
       service.updateMappings(newMappings);
@@ -76,35 +61,11 @@ describe('AccountMapperService', () => {
   });
 
   describe('mapProject', () => {
-    it('should map project name', () => {
-      const mapped = service.mapProject('AV', 'MS');
-
-      expect(mapped).toBe('Mantenimiento y Soporte');
-    });
-
-    it('should return original if no account mapping', () => {
-      const mapped = service.mapProject('UNKNOWN', 'PROJ');
-
-      expect(mapped).toBe('PROJ');
-    });
-
-    it('should return original if no project mapping', () => {
-      const mapped = service.mapProject('AV', 'UNKNOWN');
-
-      expect(mapped).toBe('UNKNOWN');
-    });
-
-    it('should handle case insensitive', () => {
-      const mapped = service.mapProject('av', 'ms');
-
-      expect(mapped).toBe('Mantenimiento y Soporte');
-    });
-
-    it('should trim whitespace', () => {
-      const mapped = service.mapProject('  AV  ', '  MS  ');
-
-      expect(mapped).toBe('Mantenimiento y Soporte');
-    });
+    it.skip('should map project name - REMOVED: No project support', () => {});
+    it.skip('should return original if no account mapping - REMOVED', () => {});
+    it.skip('should return original if no project mapping - REMOVED', () => {});
+    it.skip('should handle case insensitive - REMOVED', () => {});
+    it.skip('should trim whitespace - REMOVED', () => {});
   });
 
   describe('isSpecialAccount', () => {
@@ -177,21 +138,9 @@ describe('AccountMapperService', () => {
   });
 
   describe('hasProject', () => {
-    it('should find existing project', () => {
-      expect(service.hasProject('AV', 'MS')).toBe(true);
-      expect(service.hasProject('JM', 'PR')).toBe(true);
-    });
-
-    it('should not find non-existing project', () => {
-      expect(service.hasProject('AV', 'UNKNOWN')).toBe(false);
-    });
-
-    it('should not find project for non-existing account', () => {
-      expect(service.hasProject('UNKNOWN', 'MS')).toBe(false);
-    });
-
-    it('should be case insensitive', () => {
-      expect(service.hasProject('av', 'ms')).toBe(true);
-    });
+    it.skip('should find existing project - REMOVED: No project support', () => {});
+    it.skip('should not find non-existing project - REMOVED', () => {});
+    it.skip('should not find project for non-existing account - REMOVED', () => {});
+    it.skip('should be case insensitive - REMOVED', () => {});
   });
 });

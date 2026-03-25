@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { getChromiumExecutablePath, getChromiumLaunchOptions } from '../playwright-config';
+import { getChromiumExecutablePath, getChromiumLaunchOptions } from '../playwright-config.js';
 
 vi.mock('electron', () => ({
   app: {

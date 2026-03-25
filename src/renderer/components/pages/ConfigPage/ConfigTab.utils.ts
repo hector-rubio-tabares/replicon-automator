@@ -1,1 +1,43 @@
-import type { AccountMappings } from '@shared/types';import { SPECIAL_ACCOUNTS } from '@shared/constants';import { SPECIAL_ACCOUNT_SEEDS } from './ConfigTab.constants';export function isSpecialAccountCode(code: string): boolean {  const upper = code.trim().toUpperCase();  return (    SPECIAL_ACCOUNTS.VACATION.includes(upper) ||    SPECIAL_ACCOUNTS.NO_WORK.includes(upper) ||    SPECIAL_ACCOUNTS.WEEKEND.includes(upper)  );}export function getSpecialAccountLabel(code: string): string | null {  const upper = code.trim().toUpperCase();  const isVacation = SPECIAL_ACCOUNTS.VACATION.includes(upper);  const isNoWork = SPECIAL_ACCOUNTS.NO_WORK.includes(upper);  const isWeekend = SPECIAL_ACCOUNTS.WEEKEND.includes(upper);  if (!isVacation && !isNoWork && !isWeekend) return null;  return isVacation ? 'Vacaciones' : isNoWork ? 'No work' : isWeekend ? 'FDS' : 'Especial';}export function getMissingSpecialCodes(mappings: AccountMappings): string[] {  return SPECIAL_ACCOUNT_SEEDS.map((s) => s.code).filter((code) => !mappings[code]);}export function ensureSpecialAccounts(mappings: AccountMappings): AccountMappings {  const next: AccountMappings = { ...mappings };  for (const seed of SPECIAL_ACCOUNT_SEEDS) {    if (!next[seed.code]) {      next[seed.code] = { name: seed.name, projects: {} };    }  }  return next;}export function getSortedMappingEntries(  mappings: AccountMappings,): Array<[string, { name: string; projects: Record<string, string> }]> {  const specialOrder = new Map(SPECIAL_ACCOUNT_SEEDS.map((s, index) => [s.code, index] as const));  return Object.entries(mappings).sort(([codeA], [codeB]) => {    const aIsSpecial = specialOrder.has(codeA);    const bIsSpecial = specialOrder.has(codeB);    if (aIsSpecial && bIsSpecial) {      return (specialOrder.get(codeA) ?? 0) - (specialOrder.get(codeB) ?? 0);    }    if (aIsSpecial) return -1;    if (bIsSpecial) return 1;    return codeA.localeCompare(codeB);  });}
+import type { AccountMappings } from '@shared/types';
+import { isSpecialAccountCode, normalizeAccountCode } from '@shared/utils';
+import { SPECIAL_ACCOUNTS } from '@shared/constants';
+import { SPECIAL_ACCOUNT_SEEDS } from './ConfigTab.constants';
+
+// Re-export para compatibilidad
+export { isSpecialAccountCode };
+
+export function getSpecialAccountLabel(code: string): string | null {
+  const upper = normalizeAccountCode(code);
+  const isVacation = SPECIAL_ACCOUNTS.VACATION.includes(upper);
+  const isNoWork = SPECIAL_ACCOUNTS.NO_WORK.includes(upper);
+  const isWeekend = SPECIAL_ACCOUNTS.WEEKEND.includes(upper);
+  if (!isVacation && !isNoWork && !isWeekend) return null;
+  return isVacation ? 'Vacaciones' : isNoWork ? 'No work' : isWeekend ? 'FDS' : 'Especial';
+}
+export function getMissingSpecialCodes(mappings: AccountMappings): string[] {
+  return SPECIAL_ACCOUNT_SEEDS.map((s) => s.code).filter((code) => !mappings[code]);
+}
+export function ensureSpecialAccounts(mappings: AccountMappings): AccountMappings {
+  const next: AccountMappings = { ...mappings };
+  for (const seed of SPECIAL_ACCOUNT_SEEDS) {
+    if (!next[seed.code]) {
+      next[seed.code] = seed.name;
+    }
+  }
+  return next;
+}
+export function getSortedMappingEntries(
+  mappings: AccountMappings,
+): Array<[string, string]> {
+  const specialOrder = new Map(SPECIAL_ACCOUNT_SEEDS.map((s, index) => [s.code, index] as const));
+  return Object.entries(mappings).sort(([codeA], [codeB]) => {
+    const aIsSpecial = specialOrder.has(codeA);
+    const bIsSpecial = specialOrder.has(codeB);
+    if (aIsSpecial && bIsSpecial) {
+      return (specialOrder.get(codeA) ?? 0) - (specialOrder.get(codeB) ?? 0);
+    }
+    if (aIsSpecial) return -1;
+    if (bIsSpecial) return 1;
+    return codeA.localeCompare(codeB);
+  });
+}

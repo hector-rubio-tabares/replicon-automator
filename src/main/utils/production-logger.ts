@@ -42,7 +42,7 @@ class ProductionLogger {
                     this.cleanOldLogs();
                 }
             }
-        } catch (error) {
+        } catch {
             // Error silencioso en rotación
         }
     }
@@ -62,7 +62,7 @@ class ProductionLogger {
             files.slice(5).forEach(f => {
                 fs.unlinkSync(f.path);
             });
-        } catch (error) {
+        } catch {
             // Error silencioso en limpieza
         }
     }
@@ -95,7 +95,7 @@ class ProductionLogger {
             this.rotateIfNeeded();
             const logLine = JSON.stringify(entry) + '\n';
             fs.appendFileSync(this.logPath, logLine, 'utf-8');
-        } catch (error) {
+        } catch {
             // Error silencioso en escritura
         }
     }
@@ -137,7 +137,7 @@ class ProductionLogger {
                     }
                 })
                 .filter((entry): entry is LogEntry => entry !== null);
-        } catch (error) {
+        } catch {
             return [];
         }
     }

@@ -1,1 +1,73 @@
-import { memo, useState } from 'react';import type { AccountMappings } from '@shared/types';import AccountItem from '../AccountItem';import {  ensureSpecialAccounts,  getMissingSpecialCodes,  getSortedMappingEntries,  isSpecialAccountCode,} from '../ConfigTab.utils';import { useTranslation } from '@/i18n';export interface AccountMappingSectionProps {  mappings: AccountMappings;  onMappingsChange: (mappings: AccountMappings) => void;  onAddAccount: (code: string, name: string) => void;  onRemoveAccount: (code: string) => void;  onAddProject: (accountCode: string, projectCode: string, projectName: string) => void;}const AccountMappingSection = memo(function AccountMappingSection({  mappings,  onMappingsChange,  onAddAccount,  onRemoveAccount,  onAddProject,}: AccountMappingSectionProps) {  const { t } = useTranslation();  const [newAccountCode, setNewAccountCode] = useState('');  const [newAccountName, setNewAccountName] = useState('');  const [accountError, setAccountError] = useState<string | null>(null);  const missingSpecialCodes = getMissingSpecialCodes(mappings);  const sortedMappingEntries = getSortedMappingEntries(mappings);  const isNewAccountSpecial = Boolean(newAccountCode) && isSpecialAccountCode(newAccountCode);  const handleAddAccount = () => {    if (!newAccountCode || !newAccountName) return;    const upperCode = newAccountCode.toUpperCase().trim();    const isSpecialCode = isSpecialAccountCode(upperCode);    if (isSpecialCode) {      setAccountError(        `${upperCode} ${t('accountMapping.specialAccountsTooltip')}`,      );      return;    }    setAccountError(null);    onAddAccount(upperCode, newAccountName);    setNewAccountCode('');    setNewAccountName('');  };  const handleEnsureSpecialAccounts = () => {    onMappingsChange(ensureSpecialAccounts(mappings));  };  return (    <div className="card" role="region" aria-labelledby="mappings-title">      {}      <div className="flex items-center justify-between gap-4 mb-4">        <h2 id="mappings-title" className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">          <span className="text-2xl">🏢</span>          {t('accountMapping.title')}        </h2>        {missingSpecialCodes.length > 0 && (          <button            onClick={handleEnsureSpecialAccounts}            className="btn btn-secondary text-sm"            title={t('accountMapping.specialAccountsTooltip')}            aria-label={t('accountMapping.addSpecialAccounts')}          >            + {t('accountMapping.specialAccounts')}          </button>        )}      </div>      {}      <p className="text-gray-500 dark:text-slate-400 text-sm mb-4">        {t('accountMapping.description')}        {missingSpecialCodes.length > 0 && (          <span className="block text-amber-500 dark:text-amber-400 text-xs mt-1" role="alert">            {t('accountMapping.specialAccounts')}: {missingSpecialCodes.join(', ')}          </span>        )}      </p>      {}      <div className="flex gap-3 mb-4 p-3 bg-gray-100 dark:bg-dark-200 rounded-lg">        <input          type="text"          value={newAccountCode}          onChange={(e) => setNewAccountCode(e.target.value.toUpperCase())}          placeholder={t('accountMapping.codePlaceholder')}          className="w-32 bg-white dark:bg-dark-300 border border-gray-300 dark:border-slate-600 rounded-lg text-gray-900 dark:text-white"          aria-label={t('accountMapping.newAccountCode')}        />        <input          type="text"          value={newAccountName}          onChange={(e) => setNewAccountName(e.target.value)}          placeholder={t('accountMapping.repliconName')}          className="flex-1 bg-white dark:bg-dark-300 border border-gray-300 dark:border-slate-600 rounded-lg text-gray-900 dark:text-white"          aria-label={t('accountMapping.newAccountName')}        />        <button          onClick={handleAddAccount}          disabled={!newAccountCode || !newAccountName || isNewAccountSpecial}          className="btn btn-success"          aria-label={t('accountMapping.addAccount')}        >          + {t('accountMapping.addAccount')}        </button>      </div>      {}      {isNewAccountSpecial && (        <p className="text-amber-500 dark:text-amber-400 text-xs mb-4" role="alert">          {t('accountMapping.specialAccountsTooltip')}        </p>      )}      {accountError && (        <p className="text-red-500 dark:text-red-400 text-xs mb-4" role="alert">{accountError}</p>      )}      {}      <div className="space-y-3 max-h-[400px] overflow-auto" role="list" aria-label={t('accountMapping.accountList')}>        {sortedMappingEntries.map(([code, account]) => (          <AccountItem            key={code}            code={code}            account={account}            onRemove={() => onRemoveAccount(code)}            onAddProject={(projectCode, projectName) => onAddProject(code, projectCode, projectName)}          />        ))}      </div>    </div>  );});export default AccountMappingSection;
+import { memo } from 'react';
+import type { AccountMappings } from '@shared/types';
+import AccountItem from '../AccountItem';
+import {
+  ensureSpecialAccounts,
+  getMissingSpecialCodes,
+  getSortedMappingEntries,
+} from '../ConfigTab.utils';
+import { useTranslation } from '@/i18n';
+
+export interface AccountMappingSectionProps {
+  mappings: AccountMappings;
+  onMappingsChange: (mappings: AccountMappings) => void;
+}
+
+const AccountMappingSection = memo(function AccountMappingSection({
+  mappings,
+  onMappingsChange,
+}: AccountMappingSectionProps) {
+  const { t } = useTranslation();
+  const missingSpecialCodes = getMissingSpecialCodes(mappings);
+  const sortedMappingEntries = getSortedMappingEntries(mappings);
+
+  const handleEnsureSpecialAccounts = () => {
+    onMappingsChange(ensureSpecialAccounts(mappings));
+  };
+
+  return (
+    <div className="card" role="region" aria-labelledby="mappings-title">
+      {/* Header */}
+      <div className="flex items-center justify-between gap-4 mb-4">
+        <h2 id="mappings-title" className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+          <span className="text-2xl">🏢</span>
+          {t('accountMapping.title')}
+        </h2>
+        {missingSpecialCodes.length > 0 && (
+          <button
+            onClick={handleEnsureSpecialAccounts}
+            className="btn btn-secondary text-sm"
+            title={t('accountMapping.specialAccountsTooltip')}
+            aria-label={t('accountMapping.addSpecialAccounts')}
+          >
+            + {t('accountMapping.specialAccounts')}
+          </button>
+        )}
+      </div>
+
+      {/* Description */}
+      <p className="text-gray-500 dark:text-slate-400 text-sm mb-4">
+        {t('accountMapping.description')}
+        {missingSpecialCodes.length > 0 && (
+          <span className="block text-amber-500 dark:text-amber-400 text-xs mt-1" role="alert">
+            {t('accountMapping.specialAccounts')}: {missingSpecialCodes.join(', ')}
+          </span>
+        )}
+      </p>
+
+      {/* Account List (Read-only - Fixed 5 accounts) */}
+      <div className="space-y-3 max-h-[400px] overflow-auto" role="list" aria-label={t('accountMapping.accountList')}>
+        {sortedMappingEntries.map(([code, account]) => (
+          <AccountItem
+            key={code}
+            code={code}
+            account={account}
+            onRemove={() => {}} // No-op: accounts are fixed
+          />
+        ))}
+      </div>
+    </div>
+  );
+});
+
+export default AccountMappingSection;

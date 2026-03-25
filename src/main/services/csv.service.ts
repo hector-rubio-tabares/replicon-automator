@@ -1,6 +1,17 @@
 import * as fs from 'fs';
 import Papa from 'papaparse';
-import type { CSVRow, LoadCSVResponse } from '../../common/types';
+import type { CSVRow, LoadCSVResponse } from '../../common/types.js';
+
+/**
+ * Servicio para operaciones de CSV (carga y guardado).
+ * 
+ * @instanciable - Servicio stateless, se puede instanciar donde se necesite.
+ * No mantiene estado entre llamadas, solo realiza operaciones de I/O.
+ * 
+ * @example
+ * const csvService = new CSVService();
+ * const result = csvService.loadCSV('/path/to/file.csv');
+ */
 export class CSVService {
   /**
    * Carga y parsea un archivo CSV con datos de proyectos
@@ -55,7 +66,6 @@ export class CSVService {
     try {
       const csvData = data.map(row => ({
         Cuenta: row.cuenta,
-        Projecto: row.proyecto,
         Extras: row.extras || '',
       }));
       const csv = Papa.unparse(csvData, {

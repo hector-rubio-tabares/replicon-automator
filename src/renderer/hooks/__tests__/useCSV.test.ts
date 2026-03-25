@@ -55,8 +55,8 @@ describe('useCSV Hook', () => {
   describe('loadCSV', () => {
     it('should load CSV data successfully', async () => {
       const mockData = [
-        { cuenta: 'AV', proyecto: 'MS', extras: '' },
-        { cuenta: 'JM', proyecto: 'PR', extras: '' },
+        { cuenta: 'AV', extras: '' },
+        { cuenta: 'JM', extras: '' },
       ];
 
       window.electronAPI.loadCSV = vi.fn(async () => ({
@@ -116,7 +116,7 @@ describe('useCSV Hook', () => {
       // Set some data first
       act(() => {
         result.current.setData([
-          { cuenta: 'AV', proyecto: 'MS', extras: '' },
+          { cuenta: 'AV', extras: '' },
         ]);
       });
 
@@ -164,7 +164,7 @@ describe('useCSV Hook', () => {
       const { result } = renderHook(() => useCSV());
 
       act(() => {
-        result.current.setData([{ cuenta: 'AV', proyecto: 'MS', extras: '' }]);
+        result.current.setData([{ cuenta: 'AV', extras: '' }]);
       });
 
       await act(async () => {
@@ -183,7 +183,7 @@ describe('useCSV Hook', () => {
       const { result } = renderHook(() => useCSV());
 
       act(() => {
-        result.current.setData([{ cuenta: 'AV', proyecto: 'MS', extras: '' }]);
+        result.current.setData([{ cuenta: 'AV', extras: '' }]);
       });
 
       await act(async () => {
@@ -199,8 +199,8 @@ describe('useCSV Hook', () => {
       const { result } = renderHook(() => useCSV());
 
       const newData = [
-        { cuenta: 'AV', proyecto: 'MS', extras: '' },
-        { cuenta: 'JM', proyecto: 'PR', extras: '' },
+        { cuenta: 'AV', extras: '' },
+        { cuenta: 'JM', extras: '' },
       ];
 
       act(() => {
@@ -214,10 +214,10 @@ describe('useCSV Hook', () => {
       const { result } = renderHook(() => useCSV());
 
       act(() => {
-        result.current.setData([{ cuenta: 'AV', proyecto: 'MS', extras: '' }]);
+        result.current.setData([{ cuenta: 'AV', extras: '' }]);
       });
 
-      const newData = [{ cuenta: 'JM', proyecto: 'PR', extras: '' }];
+      const newData = [{ cuenta: 'JM', extras: '' }];
 
       act(() => {
         result.current.setData(newData);

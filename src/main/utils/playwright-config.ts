@@ -1,18 +1,29 @@
 /**
  * Configuración de Playwright para producción
  * Con asarUnpack, Playwright encuentra automáticamente sus binarios
+ * 
+ * NOTA: Este módulo es worker-safe. No intentes importar 'electron' directamente
+ * porque los worker threads no tienen acceso a él.
  */
-import { app } from 'electron';
-import { createLogger } from './logger';
+import { isMainThread } from 'worker_threads';
+import { createLogger } from './logger.js';
 
 const logger = createLogger('PlaywrightConfig');
 
 /**
  * Obtiene la ruta del ejecutable de Chromium
  * Con asarUnpack de node_modules/playwright, Playwright maneja las rutas automáticamente
+ * 
+ * En worker threads, siempre retorna undefined (modo desarrollo)
  */
 export function getChromiumExecutablePath(): string | undefined {
-    const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged;
+    // En worker threads, asumir modo desarrollo
+    if (!isMainThread) {
+        return undefined;
+    }
+
+    // NODE_ENV siempre está disponible
+    const isDev = process.env.NODE_ENV === 'development';
 
     if (isDev) {
         logger.info('Modo desarrollo: usando Chromium de node_modules');

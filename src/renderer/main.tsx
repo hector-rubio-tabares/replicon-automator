@@ -60,8 +60,7 @@ window.onunhandledrejection = (event) => {
   sendLog('ERROR', 'UnhandledRejection', errorMsg);
   showErrorOnScreen('Unhandled Promise Rejection', errorMsg);
 };
-// eslint-disable-next-line no-console
-console.log('[Renderer] Starting renderer process...');
+
 sendLog('INFO', 'Main', 'Starting renderer process');
 const initializeApp = () => {
   try {
@@ -78,8 +77,7 @@ const initializeApp = () => {
     document.documentElement.setAttribute('data-theme', resolvedTheme);
     const langState = useI18n.getState();
     document.documentElement.lang = langState.language;
-    // eslint-disable-next-line no-console
-    console.log('[Renderer] App initialized');
+
     sendLog('INFO', 'Main', 'App initialized');
   } catch (error) {
     const err = error as Error;
