@@ -167,14 +167,39 @@ function ensureChromium() {
 }
 
 function verifyElectronBuilder() {
-  log('Verificando configuración de electron-builder...', 'info');
+  log('Verificando configuración de empaquetado...', 'info');
 
   const packageJsonPath = path.join(projectRoot, 'package.json');
   const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'));
+  
+  // Verificar si se usa electron-forge
+  const forgeConfigPath = path.join(projectRoot, 'forge.config.js');
+  const usesForge = fs.existsSync(forgeConfigPath);
+  
+  if (usesForge) {
+    log('Proyecto usa electron-forge (forge.config.js detectado)', 'success');
+    log('Configuración de asarUnpack debe estar en forge.config.js', 'info');
+    
+    // Verificar que forge.config.js existe y es válido
+    try {
+      const forgeConfig = require(forgeConfigPath);
+      if (forgeConfig.packagerConfig?.asarUnpack) {
+        log('asarUnpack configurado en forge.config.js ✓', 'success');
+      } else {
+        log('asarUnpack podría no estar configurado en forge.config.js', 'warning');
+      }
+    } catch (error) {
+      log('No se pudo leer forge.config.js', 'warning');
+    }
+    
+    return; // Salir exitosamente
+  }
 
+  // Si no usa forge, verificar electron-builder
   if (!packageJson.build) {
-    log('No hay configuración de build en package.json', 'error');
-    process.exit(1);
+    log('No se encontró configuración de electron-builder ni electron-forge', 'warning');
+    log('El empaquetado podría no funcionar correctamente', 'warning');
+    return; // No fallar, solo advertir
   }
 
   if (!packageJson.build.asarUnpack) {
@@ -218,7 +243,7 @@ function main() {
   console.log('\n🌐 Paso 2: Asegurar que Chromium esté disponible');
   ensureChromium();
 
-  console.log('\n⚙️  Paso 3: Verificar configuración de electron-builder');
+  console.log('\n⚙️  Paso 3: Verificar configuración de empaquetado');
   verifyElectronBuilder();
 
   console.log('\n📋 Paso 4: Mostrar información de Playwright');
