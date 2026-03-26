@@ -7,7 +7,8 @@ const __dirname = dirname(__filename);
 export default {
   packagerConfig: {
     asar: true,
-    prune: false, // Do NOT prune based on .gitignore - include everything
+    // NO ignore function - let electron-packager include everything by default
+    // This ensures dist/ is always included on both Windows and Linux
     asarUnpack: [
       '**/node_modules/playwright/**/*',
     ],
@@ -21,15 +22,6 @@ export default {
     ],
   },
   makers: [
-    {
-      name: '@electron-forge/maker-squirrel',
-      config: {
-        name: 'RepliconAutomator',
-        setupIcon: join(__dirname, 'assets', 'icon.ico'),
-        iconUrl: 'https://raw.githubusercontent.com/hector26rubio2/replicon-automator/main/assets/icon.ico',
-        // loadingGif: Opcional - removido por ahora
-      },
-    },
     {
       name: '@electron-forge/maker-zip',
       platforms: ['win32'],
