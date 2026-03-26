@@ -61,7 +61,40 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
       
-      - name: Install Wine (for Windows packaging on Linux)
+      # Cache node_modules para ahorrar ~2 minutos
+      - name: Cache node modules
+        uses: actions/cache@v4
+        id: cache-node-modules
+        with:
+          path: node_modules
+          key: ${{ runner.os }}-node-v1-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-v1-
+      
+      # Cache Playwright browsers para ahorrar ~1 minuto (500MB aprox)
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        id: cache-playwright
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-v1-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-playwright-v1-
+      
+      # Cache Wine para ahorrar ~1-2 minutos en instalación
+      - name: Cache Wine installation
+        uses: actions/cache@v4
+        id: cache-wine
+        with:
+          path: |
+            /opt/wine-stable
+            ~/.wine
+          key: ${{ runner.os }}-wine-v1-9.0
+          restore-keys: |
+            ${{ runner.os }}-wine-v1-
+      
+      - name: Install Wine and dependencies
+        if: steps.cache-wine.outputs.cache-hit != 'true'
         run: |
           sudo dpkg --add-architecture i386
           sudo mkdir -pm755 /etc/apt/keyrings
@@ -72,13 +105,15 @@ jobs:
           sudo apt-get install -y --install-recommends winehq-stable
       
       - name: Install dependencies
+        if: steps.cache-node-modules.outputs.cache-hit != 'true'
         run: npm ci
-      
-      # Playwright ya viene en node_modules desde npm ci
-      # No necesitamos instalar browsers porque solo empaquetamos (no ejecutamos)
       
       - name: Prepare Playwright for build
         run: npm run prepare-playwright
+      
+      - name: Install Playwright browsers (Linux - for testing only)
+        if: steps.cache-playwright.outputs.cache-hit != 'true'
+        run: npx playwright install chromium --with-deps
       
       - name: Run quality checks
         run: npm run validate

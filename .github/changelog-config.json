@@ -2,30 +2,51 @@
   "categories": [
     {
       "title": "## 🚀 Features",
-      "labels": ["feature", "enhancement"]
+      "labels": [
+        "feature",
+        "enhancement"
+      ]
     },
     {
       "title": "## 🐛 Bug Fixes",
-      "labels": ["bug", "fix"]
+      "labels": [
+        "bug",
+        "fix"
+      ]
     },
     {
       "title": "## 🛠️ Improvements",
-      "labels": ["improvement", "refactor"]
+      "labels": [
+        "improvement",
+        "refactor"
+      ]
     },
     {
       "title": "## 📚 Documentation",
-      "labels": ["documentation", "docs"]
+      "labels": [
+        "documentation",
+        "docs"
+      ]
     },
     {
       "title": "## 🧪 Tests",
-      "labels": ["test", "testing"]
+      "labels": [
+        "test",
+        "testing"
+      ]
     },
     {
       "title": "## 🔧 Maintenance",
-      "labels": ["chore", "maintenance", "dependencies"]
+      "labels": [
+        "chore",
+        "maintenance",
+        "dependencies"
+      ]
     }
   ],
-  "ignore_labels": ["ignore-changelog"],
+  "ignore_labels": [
+    "ignore-changelog"
+  ],
   "sort": {
     "order": "ASC",
     "on_property": "mergedAt"
@@ -40,5 +61,8 @@
   "tag_resolver": {
     "method": "semver"
   },
-  "base_branches": ["main", "master"]
+  "base_branches": [
+    "main",
+    "master"
+  ]
 }
