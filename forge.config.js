@@ -22,25 +22,31 @@ export default {
     ignore: (path) => {
       if (!path) return false;
       
-      // Always include dist/ (compiled code)
-      if (path.startsWith('/dist')) return false;
+      // Normalize path (remove leading slash if present)
+      const normalizedPath = path.startsWith('/') ? path.substring(1) : path;
+      
+      // Always include dist/ (compiled code - CRITICAL)
+      if (normalizedPath.startsWith('dist')) return false;
       
       // Always include node_modules (dependencies)
-      if (path.startsWith('/node_modules')) return false;
+      if (normalizedPath.startsWith('node_modules')) return false;
       
-      // Always include assets
-      if (path.startsWith('/assets')) return false;
+      // Always include critical files
+      if (normalizedPath.startsWith('assets')) return false;
+      if (normalizedPath.startsWith('playwright-bin')) return false;
+      if (normalizedPath === 'package.json') return false;
+      if (normalizedPath === '.env.production') return false;
       
-      // Always include playwright-bin
-      if (path.startsWith('/playwright-bin')) return false;
+      // Ignore development and source files
+      if (normalizedPath.match(/^(src|scripts|docs|\.github|coverage|test|out|release)($|\/)/)) return true;
+      if (normalizedPath.match(/\.(ts|tsx|test\.js|spec\.js)$/)) return true;
+      if (normalizedPath.match(/^\.git($|\/)/)) return true;
+      if (normalizedPath.match(/^\.(gitignore|eslintrc|prettierrc|env\.example)/)) return true;
+      if (normalizedPath.match(/tsconfig.*\.json$/)) return true;
+      if (normalizedPath.match(/vitest\.config\./)) return true;
+      if (normalizedPath.match(/vite\.config\./)) return true;
       
-      // Ignore common dev files
-      if (path.match(/^\/(src|scripts|docs|\.github|coverage|test|\.vscode|\.git)/)) return true;
-      if (path.match(/\.(ts|tsx|test\.js|spec\.js|md)$/)) return true;
-      if (path.match(/^\/\.(gitignore|eslintrc|prettierrc|env\.example)/)) return true;
-      if (path.endsWith('tsconfig.json') || path.endsWith('tsconfig.main.json')) return true;
-      
-      // Include everything else
+      // Include everything else by default
       return false;
     },
   },

@@ -87,6 +87,24 @@ jobs:
         env:
           NODE_ENV: production
       
+      - name: Debug - List dist folder contents
+        run: |
+          echo "=== Contents of dist/ ==="
+          ls -lah dist/ || echo "dist/ does not exist"
+          echo ""
+          echo "=== Contents of dist/main/ ==="
+          ls -lah dist/main/ || echo "dist/main/ does not exist"
+          echo ""
+          echo "=== Checking if dist/main/index.js exists ==="
+          if [ -f "dist/main/index.js" ]; then
+            echo "✅ dist/main/index.js EXISTS"
+            file dist/main/index.js
+          else
+            echo "❌ dist/main/index.js DOES NOT EXIST"
+            echo "Looking for index.* in dist/main/:"
+            find dist/main -name "index.*" -type f 2>/dev/null || echo "No index.* files found"
+          fi
+      
       - name: Verify Playwright before packaging
         run: |
           echo "✅ Verificando que Playwright esté en node_modules..."
