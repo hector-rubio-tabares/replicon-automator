@@ -53,6 +53,22 @@ class UpdaterService {
       this.lastUpdateInfo = info;
       if (this.dialogShowing) return;
       this.dialogShowing = true;
+      
+      // Asegurar que la ventana esté visible y al frente antes de mostrar el diálogo
+      if (this.mainWindow) {
+        if (this.mainWindow.isMinimized()) {
+          this.mainWindow.restore();
+        }
+        this.mainWindow.show();
+        this.mainWindow.focus();
+        
+        // En Windows, traer al frente
+        if (process.platform === 'win32') {
+          this.mainWindow.setAlwaysOnTop(true);
+          this.mainWindow.setAlwaysOnTop(false);
+        }
+      }
+      
       if (this.mainWindow && this.mainWindow.isVisible()) {
         const result = await dialog.showMessageBox(this.mainWindow, {
           type: 'info',
@@ -108,6 +124,22 @@ class UpdaterService {
       });
       if (this.dialogShowing) return;
       this.dialogShowing = true;
+      
+      // Asegurar que la ventana esté visible y al frente antes de mostrar el diálogo
+      if (this.mainWindow) {
+        if (this.mainWindow.isMinimized()) {
+          this.mainWindow.restore();
+        }
+        this.mainWindow.show();
+        this.mainWindow.focus();
+        
+        // En Windows, traer al frente
+        if (process.platform === 'win32') {
+          this.mainWindow.setAlwaysOnTop(true);
+          this.mainWindow.setAlwaysOnTop(false);
+        }
+      }
+      
       if (this.mainWindow && this.mainWindow.isVisible()) {
         const result = await dialog.showMessageBox(this.mainWindow, {
           type: 'info',

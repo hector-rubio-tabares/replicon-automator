@@ -75,8 +75,8 @@ export default function App() {
       <TabNavigation tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab} />
       <main className="flex-1 p-6">
         <Suspense fallback={<TabLoader />}>
-          {activeTab === 'automation' && <AutomationTab credentials={credentials} onCredentialsChange={setCredentials} csvData={csv.data} csvFileName={csv.fileName} onLoadCSV={csv.loadCSV} onStartAutomation={handleStart} onStopAutomation={automation.stop} onPauseAutomation={automation.togglePause} status={automation.status} progress={automation.progress} isPaused={automation.isPaused} logs={automation.logs} />}
-          {activeTab === 'csv-editor' && <CSVEditorTab data={csv.data} onDataChange={csv.setData} onLoadCSV={csv.loadCSV} onSaveCSV={csv.saveCSV} mappings={config.mappings} />}
+          {activeTab === 'automation' && <AutomationTab credentials={credentials} onCredentialsChange={setCredentials} csvData={csv.data} csvFileName={csv.fileName} onStartAutomation={handleStart} onStopAutomation={automation.stop} onPauseAutomation={automation.togglePause} status={automation.status} progress={automation.progress} isPaused={automation.isPaused} logs={automation.logs} />}
+          {activeTab === 'csv-editor' && <CSVEditorTab data={csv.data} onDataChange={csv.setData} mappings={config.mappings} />}
           {activeTab === 'config' && <ConfigTab horarios={config.horarios} onHorariosChange={config.setHorarios} appConfig={config.appConfig} onAppConfigChange={config.setAppConfig} />}
         </Suspense>
       </main>

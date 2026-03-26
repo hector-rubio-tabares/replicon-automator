@@ -6,7 +6,6 @@
  * siguiendo el principio de responsabilidad única (SRP).
  */
 
-export { setupCSVHandlers, type CSVHandlerDeps } from './csv.ipc-handler.js';
 export { setupCredentialsHandlers, type CredentialsHandlerDeps } from './credentials.ipc-handler.js';
 export { setupConfigHandlers, type ConfigHandlerDeps } from './config.ipc-handler.js';
 export { setupLoggingHandlers } from './logging.ipc-handler.js';

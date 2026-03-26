@@ -23,8 +23,6 @@ vi.mock('@/i18n', () => ({
 
 global.window.electronAPI = {
   sendLogToMain: vi.fn(),
-  loadCSV: vi.fn(),
-  saveCSV: vi.fn(),
   saveCredentials: vi.fn(),
   loadCredentials: vi.fn(),
   deleteCredentials: vi.fn(),

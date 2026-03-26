@@ -115,6 +115,12 @@ if (!gotTheLock) {
       }
       mainWindow.focus();
       mainWindow.show();
+      
+      // En Windows, traer la ventana al frente de forma más agresiva
+      if (process.platform === 'win32') {
+        mainWindow.setAlwaysOnTop(true);
+        mainWindow.setAlwaysOnTop(false);
+      }
     }
   });
 }
@@ -155,7 +161,12 @@ function createWindow(): void {
       contextIsolation: true,
       preload: preloadPath,
       devTools: isDev,
-      sandbox: true, // Seguridad adicional
+      sandbox: true,
+      webSecurity: true,
+      allowRunningInsecureContent: false,
+      experimentalFeatures: false,
+      enableBlinkFeatures: '',
+      disableBlinkFeatures: '',
     },
     icon: appIcon || iconPath,
     titleBarStyle: 'default',

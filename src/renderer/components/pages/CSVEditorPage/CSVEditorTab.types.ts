@@ -2,8 +2,6 @@ import type { CSVRow, AccountMappings } from '@shared/types';
 export interface CSVEditorTabProps {
   data: CSVRow[] | null;
   onDataChange: (data: CSVRow[]) => void;
-  onLoadCSV: () => Promise<void>;
-  onSaveCSV: () => Promise<void>;
   mappings: AccountMappings;
 }
 export type DayInfo = {

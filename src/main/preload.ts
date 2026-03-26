@@ -64,10 +64,6 @@ function createSafeListener<T>(
 }
 
 contextBridge.exposeInMainWorld('electronAPI', {
-  // CSV Operations
-  loadCSV: () => ipcRenderer.invoke('csv:load'),
-  saveCSV: (data: CSVRow[]) => ipcRenderer.invoke('csv:save', data),
-  
   // Credentials
   saveCredentials: (credentials: Credentials) => 
     ipcRenderer.invoke('credentials:save', credentials),

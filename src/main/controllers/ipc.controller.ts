@@ -1,8 +1,7 @@
 import type { BrowserWindow } from 'electron';
 import type Store from 'electron-store';
-import { AutomationWorkerService, CSVService } from '../services/index.js';
+import { AutomationWorkerService } from '../services/index.js';
 import { credentialsService } from '../services/credentials.service.js';
-import { setupCSVHandlers } from './handlers/csv.ipc-handler.js';
 import { setupCredentialsHandlers } from './handlers/credentials.ipc-handler.js';
 import { setupConfigHandlers } from './handlers/config.ipc-handler.js';
 import { setupLoggingHandlers } from './handlers/logging.ipc-handler.js';
@@ -38,16 +37,9 @@ export interface IPCControllerDeps {
 export function setupIPCHandlers(deps: IPCControllerDeps): void {
   const { store, getMainWindow, getAutomation, setAutomation, appVersion } = deps;
 
-  // Instanciar servicios stateless (factory pattern)
-  const csvService = new CSVService();
   // credentialsService es singleton importado directamente
 
   // Configurar handlers por dominio, pasando solo las dependencias necesarias
-  setupCSVHandlers({
-    csvService,
-    getMainWindow,
-  });
-
   setupCredentialsHandlers({
     credentialsService,
   });

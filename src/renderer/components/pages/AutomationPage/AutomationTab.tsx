@@ -7,7 +7,6 @@ interface AutomationTabProps {
   onCredentialsChange: (credentials: Credentials) => void;
   csvData: CSVRow[] | null;
   csvFileName: string | null;
-  onLoadCSV: () => Promise<void>;
   onStartAutomation: () => Promise<void>;
   onStopAutomation: () => Promise<void>;
   onPauseAutomation: () => Promise<void>;
@@ -21,7 +20,6 @@ export default function AutomationTab({
   onCredentialsChange,
   csvData,
   csvFileName,
-  onLoadCSV,
   onStartAutomation,
   onStopAutomation,
   onPauseAutomation,
@@ -145,32 +143,21 @@ export default function AutomationTab({
             </div>
           </div>
           {}
+          {csvFileName && csvData ? (
           <div className="card">
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
               <span className="text-2xl">📊</span>
               {t('csv.title')}
             </h2>
             <div className="flex items-center gap-4">
-              <button
-                onClick={onLoadCSV}
-                className="btn btn-secondary"
-                disabled={isRunning}
-                aria-label={t('csv.loadFile')}
-              >
-                📁 {t('csv.loadFile')}
-              </button>
               <div className="flex-1">
-                {csvFileName ? (
-                  <div className="flex items-center gap-3">
-                    <span className="text-emerald-500 dark:text-emerald-400">✓</span>
-                    <span className="text-gray-900 dark:text-white">{csvFileName}</span>
-                    <span className="text-gray-500 dark:text-slate-500">
-                      ({csvData?.length || 0} {t('csv.columns.date').toLowerCase()}s)
-                    </span>
-                  </div>
-                ) : (
-                  <span className="text-gray-500 dark:text-slate-500">{t('csv.noData')}</span>
-                )}
+                <div className="flex items-center gap-3">
+                  <span className="text-emerald-500 dark:text-emerald-400">✓</span>
+                  <span className="text-gray-900 dark:text-white">{csvFileName}</span>
+                  <span className="text-gray-500 dark:text-slate-500">
+                    ({csvData?.length || 0} {t('csv.columns.date').toLowerCase()}s)
+                  </span>
+                </div>
               </div>
             </div>
             {csvData && csvData.length > 0 && (
@@ -209,6 +196,7 @@ export default function AutomationTab({
               </div>
             )}
           </div>
+          ) : null}
           {}
           {progress && status !== 'idle' && (
             <div className="card border-primary-500/30">
