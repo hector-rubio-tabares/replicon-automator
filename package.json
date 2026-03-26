@@ -1,6 +1,6 @@
 {
   "name": "replicon-automator",
-  "version": "4.0.0",
+  "version": "4.0.1",
   "description": "Automatizador de Replicon - App de escritorio moderna con Electron + Playwright",
   "type": "module",
   "main": "dist/main/index.js",
