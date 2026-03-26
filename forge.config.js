@@ -18,6 +18,31 @@ export default {
       join(__dirname, 'playwright-bin'),
       join(__dirname, '.env.production'),
     ],
+    // DO NOT ignore dist/ - it contains the compiled app
+    ignore: (path) => {
+      if (!path) return false;
+      
+      // Always include dist/ (compiled code)
+      if (path.startsWith('/dist')) return false;
+      
+      // Always include node_modules (dependencies)
+      if (path.startsWith('/node_modules')) return false;
+      
+      // Always include assets
+      if (path.startsWith('/assets')) return false;
+      
+      // Always include playwright-bin
+      if (path.startsWith('/playwright-bin')) return false;
+      
+      // Ignore common dev files
+      if (path.match(/^\/(src|scripts|docs|\.github|coverage|test|\.vscode|\.git)/)) return true;
+      if (path.match(/\.(ts|tsx|test\.js|spec\.js|md)$/)) return true;
+      if (path.match(/^\/\.(gitignore|eslintrc|prettierrc|env\.example)/)) return true;
+      if (path.endsWith('tsconfig.json') || path.endsWith('tsconfig.main.json')) return true;
+      
+      // Include everything else
+      return false;
+    },
   },
   makers: [
     {
