@@ -7,40 +7,8 @@ const __dirname = dirname(__filename);
 export default {
   packagerConfig: {
     asar: true,
-    prune: false,
-    // Ignore function: return true to IGNORE, false to KEEP
-    // Based on https://github.com/electron/packager/issues/1787
-    ignore: function(path) {
-      // KEEP these critical paths (must return false)
-      if (!path) return false;
-      if (path === '/dist' || path.startsWith('/dist/')) return false;
-      if (path === '/node_modules' || path.startsWith('/node_modules/')) return false;
-      if (path === '/package.json') return false;
-      if (path === '/playwright-bin' || path.startsWith('/playwright-bin/')) return false;
-      if (path === '/.env.production') return false;
-      if (path === '/assets' || path.startsWith('/assets/')) return false;
-      
-      // IGNORE everything else (return true)
-      if (path.startsWith('/src/')) return true;
-      if (path.startsWith('/test/')) return true;
-      if (path.startsWith('/scripts/')) return true;
-      if (path.startsWith('/docs/')) return true;
-      if (path.startsWith('/.github/')) return true;
-      if (path.startsWith('/coverage/')) return true;
-      if (path.startsWith('/out/')) return true;
-      if (path.startsWith('/release/')) return true;
-      if (path.startsWith('/.git/')) return true;
-      if (path.endsWith('.ts') || path.endsWith('.tsx')) return true;
-      if (path.endsWith('.test.js') || path.endsWith('.test.ts')) return true;
-      if (path.includes('tsconfig') && path.endsWith('.json')) return true;
-      if (path.includes('vite.config')) return true;
-      if (path.includes('vitest.config')) return true;
-      if (path.endsWith('.md') && path !== '/README.md') return true;
-      if (path.match(/\.(eslintrc|prettierrc|gitignore)$/)) return true;
-      
-      // Default: KEEP everything else
-      return false;
-    },
+    // NO ignore function - let electron-packager include everything by default
+    // This ensures dist/ is always included on both Windows and Linux
     asarUnpack: [
       '**/node_modules/playwright/**/*',
     ],
@@ -54,15 +22,6 @@ export default {
     ],
   },
   makers: [
-    {
-      name: '@electron-forge/maker-squirrel',
-      config: {
-        name: 'RepliconAutomator',
-        setupIcon: join(__dirname, 'assets', 'icon.ico'),
-        iconUrl: 'https://raw.githubusercontent.com/hector26rubio2/replicon-automator/main/assets/icon.ico',
-        // loadingGif: Opcional - removido por ahora
-      },
-    },
     {
       name: '@electron-forge/maker-zip',
       platforms: ['win32'],

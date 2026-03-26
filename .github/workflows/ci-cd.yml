@@ -61,15 +61,6 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
       
-      - name: Install Wine & Mono (required for packaging Windows on Linux)
-        run: |
-          sudo dpkg --add-architecture i386
-          sudo mkdir -pm755 /etc/apt/keyrings
-          sudo wget -O /etc/apt/keyrings/winehq-archive.key https://dl.winehq.org/wine-builds/winehq.key
-          sudo wget -NP /etc/apt/sources.list.d/ https://dl.winehq.org/wine-builds/ubuntu/dists/jammy/winehq-jammy.sources
-          sudo apt-get update
-          sudo apt-get install -y --install-recommends winehq-stable mono-devel
-      
       - name: Install dependencies
         run: npm ci
       
@@ -121,50 +112,11 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       
-      # Verificar que node_modules/playwright quedó desempaquetado
-      - name: Verify packaged Playwright (asarUnpack)
-        run: |
-          echo "📦 Verificando recursos empaquetados (electron-forge)..."
-          
-          if [ -d "out/replicon-automator-win32-x64/resources" ]; then
-            echo "✅ Carpeta resources encontrada"
-            ls -lah out/replicon-automator-win32-x64/resources/
-            
-            if [ -d "out/replicon-automator-win32-x64/resources/app.asar.unpacked" ]; then
-              echo ""
-              echo "✅ app.asar.unpacked encontrado"
-              
-              if [ -d "out/replicon-automator-win32-x64/resources/app.asar.unpacked/node_modules/playwright" ]; then
-                echo "✅ Playwright desempaquetado correctamente"
-                echo ""
-                echo "📂 Buscando chrome.exe:"
-                find out/replicon-automator-win32-x64/resources/app.asar.unpacked/node_modules/playwright -name "chrome.exe" -type f || echo "⚠️  chrome.exe no encontrado (se descargará al ejecutar)"
-              else
-                echo "❌ ERROR: node_modules/playwright NO encontrado en app.asar.unpacked"
-                ls -lah out/replicon-automator-win32-x64/resources/app.asar.unpacked/node_modules/ || echo "node_modules no existe"
-                exit 1
-              fi
-            else
-              echo "❌ ERROR: app.asar.unpacked NO encontrado en resources"
-              echo "Contenido de resources:"
-              ls -lah out/replicon-automator-win32-x64/resources/
-              exit 1
-            fi
-          else
-            echo "❌ ERROR: Carpeta resources no encontrada"
-            echo "Contenido de out/:"
-            ls -lah out/
-            exit 1
-          fi
-      
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: windows-installer
+          name: windows-portable
           path: |
-            out/make/squirrel.windows/x64/*.exe
-            out/make/squirrel.windows/x64/*.nupkg
-            out/make/squirrel.windows/x64/RELEASES
             out/make/zip/win32/x64/*.zip
             release_notes.txt
           retention-days: 1  # Eliminar después de 1 día para $0 storage
@@ -180,7 +132,7 @@ jobs:
       - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
-          name: windows-installer
+          name: windows-portable
       
       - name: List downloaded files
         run: |
@@ -209,9 +161,6 @@ jobs:
           draft: false
           prerelease: false
           files: |
-            *.exe
-            *.nupkg
             *.zip
-            RELEASES
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
