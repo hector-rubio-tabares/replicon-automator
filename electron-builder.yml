@@ -1,0 +1,54 @@
+appId: com.hdrt.replicon-automator
+productName: Replicon Automator
+copyright: Copyright © 2026 Hector David Rubio Tabares
+
+directories:
+  output: release
+  buildResources: assets
+
+files:
+  - dist/**/*
+  - node_modules/**/*
+  - package.json
+  - playwright-bin/**/*
+  - .env.production
+
+asarUnpack:
+  - "**/node_modules/playwright/**/*"
+
+extraResources:
+  - from: playwright-bin
+    to: playwright-bin
+    filter:
+      - "**/*"
+  - .env.production
+
+win:
+  target:
+    - target: nsis
+      arch:
+        - x64
+    - target: portable
+      arch:
+        - x64
+  icon: assets/icon.ico
+  artifactName: ${productName}.${ext}
+  
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  deleteAppDataOnUninstall: false
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: ${productName}
+  artifactName: ${productName}.Setup.${ext}
+  
+portable:
+  artifactName: ${productName}.Portable.${ext}
+
+publish:
+  provider: github
+  owner: hector26rubio2
+  repo: replicon-automator
+  releaseType: release

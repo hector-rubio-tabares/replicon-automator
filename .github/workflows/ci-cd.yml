@@ -18,7 +18,7 @@ env:
 jobs:
   build:
     name: Build & Quality Check
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     permissions:
       contents: write
     outputs:
@@ -31,7 +31,6 @@ jobs:
       
       - name: Get version from tag
         id: version
-        shell: bash
         run: |
           if [[ "${{ github.ref }}" =~ refs/tags/v(.+) ]]; then
             VERSION="${BASH_REMATCH[1]}"
@@ -43,7 +42,6 @@ jobs:
       
       - name: Extract release notes from CHANGELOG
         id: changelog
-        shell: bash
         run: |
           VERSION="${{ steps.version.outputs.version }}"
           
@@ -63,6 +61,16 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
       
+      - name: Install Wine (for Windows packaging on Linux)
+        run: |
+          sudo dpkg --add-architecture i386
+          sudo mkdir -pm755 /etc/apt/keyrings
+          sudo wget -O /etc/apt/keyrings/winehq-archive.key https://dl.winehq.org/wine-builds/winehq.key
+          CODENAME=$(lsb_release -cs)
+          sudo wget -NP /etc/apt/sources.list.d/ https://dl.winehq.org/wine-builds/ubuntu/dists/${CODENAME}/winehq-${CODENAME}.sources
+          sudo apt-get update
+          sudo apt-get install -y --install-recommends winehq-stable
+      
       - name: Install dependencies
         run: npm ci
       
@@ -75,56 +83,25 @@ jobs:
       - name: Run quality checks
         run: npm run validate
       
-      - name: Build application
-        run: npm run build
-        env:
-          NODE_ENV: production
-      
-      - name: Debug - List dist folder contents
-        shell: bash
-        run: |
-          echo "=== Contents of dist/ ==="
-          ls -lah dist/ || echo "dist/ does not exist"
-          echo ""
-          echo "=== Contents of dist/main/ ==="
-          ls -lah dist/main/ || echo "dist/main/ does not exist"
-          echo ""
-          echo "=== Checking if dist/main/index.js exists ==="
-          if [ -f "dist/main/index.js" ]; then
-            echo "✅ dist/main/index.js EXISTS"
-            file dist/main/index.js
-          else
-            echo "❌ dist/main/index.js DOES NOT EXIST"
-            echo "Looking for index.* in dist/main/:"
-            find dist/main -name "index.*" -type f 2>/dev/null || echo "No index.* files found"
-          fi
-      
-      - name: Verify Playwright before packaging
-        shell: bash
-        run: |
-          echo "✅ Verificando que Playwright esté en node_modules..."
-          if [ -d "node_modules/playwright" ]; then
-            echo "✅ Playwright encontrado"
-            ls -la node_modules/playwright/ | head -20
-          else
-            echo "❌ ERROR: Playwright no está en node_modules"
-            exit 1
-          fi
-      
-      - name: Package application (Windows)
-        run: npx electron-forge make --platform=win32
+      - name: Build and package application (Windows)
+        run: npm run dist:win
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NODE_ENV: production
+      
+      - name: List release artifacts
+        run: |
+          echo "=== Release artifacts ==="
+          ls -lah release/ || echo "release/ not found"
       
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: windows-installer
           path: |
-            out/make/squirrel.windows/x64/*.exe
-            out/make/squirrel.windows/x64/*.nupkg
-            out/make/squirrel.windows/x64/RELEASES
-            out/make/zip/win32/x64/*.zip
+            release/*.exe
+            release/latest.yml
+            release/*.exe.blockmap
             release_notes.txt
           retention-days: 1  # Eliminar después de 1 día para $0 storage
 
@@ -142,7 +119,6 @@ jobs:
           name: windows-installer
       
       - name: List downloaded files
-        shell: bash
         run: |
           echo "=== Downloaded files ==="
           ls -lah
@@ -150,7 +126,6 @@ jobs:
       
       - name: Read release notes
         id: notes
-        shell: bash
         run: |
           if [ -f release_notes.txt ]; then
             {
@@ -170,9 +145,8 @@ jobs:
           draft: false
           prerelease: false
           files: |
-            *.exe
-            *.nupkg
-            *.zip
-            RELEASES
+            release/*.exe
+            release/latest.yml
+            release/*.exe.blockmap
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

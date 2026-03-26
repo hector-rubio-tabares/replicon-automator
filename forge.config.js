@@ -23,11 +23,14 @@ export default {
   },
   makers: [
     {
-      name: '@electron-forge/maker-squirrel',
+      name: '@electron-forge/maker-wix',
       config: {
-        name: 'RepliconAutomator',
-        setupIcon: join(__dirname, 'assets', 'icon.ico'),
-        iconUrl: 'https://raw.githubusercontent.com/hector26rubio2/replicon-automator/main/assets/icon.ico',
+        name: 'Replicon Automator',
+        manufacturer: 'Hector David Rubio Tabares',
+        appIconPath: join(__dirname, 'assets', 'icon.ico'),
+        shortcutFolderName: 'Replicon Automator',
+        shortcutName: 'Replicon Automator',
+        upgradeCode: 'f7e4e8b0-3b1a-4c6a-9d2e-5f8a7c9b1d3e',
       },
     },
     {
