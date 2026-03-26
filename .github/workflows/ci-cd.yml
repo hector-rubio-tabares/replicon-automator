@@ -31,6 +31,7 @@ jobs:
       
       - name: Get version from tag
         id: version
+        shell: bash
         run: |
           if [[ "${{ github.ref }}" =~ refs/tags/v(.+) ]]; then
             VERSION="${BASH_REMATCH[1]}"
@@ -42,6 +43,7 @@ jobs:
       
       - name: Extract release notes from CHANGELOG
         id: changelog
+        shell: bash
         run: |
           VERSION="${{ steps.version.outputs.version }}"
           
@@ -79,6 +81,7 @@ jobs:
           NODE_ENV: production
       
       - name: Debug - List dist folder contents
+        shell: bash
         run: |
           echo "=== Contents of dist/ ==="
           ls -lah dist/ || echo "dist/ does not exist"
@@ -97,6 +100,7 @@ jobs:
           fi
       
       - name: Verify Playwright before packaging
+        shell: bash
         run: |
           echo "✅ Verificando que Playwright esté en node_modules..."
           if [ -d "node_modules/playwright" ]; then
@@ -138,6 +142,7 @@ jobs:
           name: windows-installer
       
       - name: List downloaded files
+        shell: bash
         run: |
           echo "=== Downloaded files ==="
           ls -lah
@@ -145,6 +150,7 @@ jobs:
       
       - name: Read release notes
         id: notes
+        shell: bash
         run: |
           if [ -f release_notes.txt ]; then
             {
