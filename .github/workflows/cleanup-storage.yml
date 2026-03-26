@@ -178,3 +178,183 @@ jobs:
             } else if (totalMB < 100) {
               console.log('✅ Storage optimizado (<100 MB)');
             }
+name: Cleanup Storage (Free Tier Optimization)
+
+# Este workflow limpia automáticamente artifacts y caches antiguos
+# para garantizar $0 de consumo de storage en cuentas gratuitas
+
+on:
+  # Ejecutar cada 6 horas para limpieza agresiva
+  schedule:
+    - cron: '0 */6 * * *'
+  # Ejecutar después de cada workflow completado
+  workflow_run:
+    workflows: ["CI/CD Pipeline", "Test Coverage Report"]
+    types:
+      - completed
+  # Ejecutar automáticamente después de cada push
+  push:
+    branches: [main]
+  # Permitir ejecución manual
+  workflow_dispatch:
+
+permissions:
+  actions: write
+  contents: read
+
+jobs:
+  cleanup-artifacts:
+    name: Delete Old Artifacts
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete artifacts (all if manual, old if automatic)
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const isManual = context.eventName === 'workflow_dispatch';
+            
+            // Obtener todos los artifacts
+            const artifacts = await github.rest.actions.listArtifactsForRepo({
+              owner,
+              repo,
+              per_page: 100
+            });
+            
+            const sixHoursAgo = new Date(Date.now() - 6 * 60 * 60 * 1000);
+            let deletedCount = 0;
+            
+            for (const artifact of artifacts.data.artifacts) {
+              const createdAt = new Date(artifact.created_at);
+              
+              // Si es manual, borrar TODO. Si es automático, solo > 6 horas
+              const shouldDelete = isManual || createdAt < sixHoursAgo;
+              
+              if (shouldDelete) {
+                console.log(`🗑️  Eliminando artifact: ${artifact.name} (${artifact.size_in_bytes} bytes, creado: ${artifact.created_at})`);
+                
+                await github.rest.actions.deleteArtifact({
+                  owner,
+                  repo,
+                  artifact_id: artifact.id
+                });
+                
+                deletedCount++;
+              }
+            }
+            
+            if (isManual) {
+              console.log(`🚨 LIMPIEZA MANUAL: Todos los artifacts eliminados`);
+            }
+            console.log(`✅ Artifacts eliminados: ${deletedCount}`);
+            console.log(`📊 Artifacts restantes: ${artifacts.data.total_count - deletedCount}`);
+
+  cleanup-caches:
+    name: Delete Unused Caches
+    runs-on: ubuntu-latest
+    steps:
+      - name: Cleanup caches (all if manual, old if automatic)
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const isManual = context.eventName === 'workflow_dispatch';
+            
+            // Obtener todos los caches
+            const caches = await github.rest.actions.getActionsCacheList({
+              owner,
+              repo,
+              per_page: 100
+            });
+            
+            const oneHourAgo = new Date(Date.now() - 1 * 60 * 60 * 1000);
+            let deletedCount = 0;
+            let freedSpace = 0;
+            
+            for (const cache of caches.data.actions_caches) {
+              const lastAccessed = new Date(cache.last_accessed_at);
+              
+              // Si es manual, borrar TODO. Si es automático, aplicar reglas
+              const shouldDelete = isManual || 
+                lastAccessed < oneHourAgo ||
+                new Date(cache.created_at) < new Date(Date.now() - 6 * 60 * 60 * 1000);
+              
+              if (shouldDelete) {
+                console.log(`🗑️  Eliminando cache: ${cache.key} (${(cache.size_in_bytes / 1024 / 1024).toFixed(2)} MB, último acceso: ${cache.last_accessed_at})`);
+                
+                await github.rest.actions.deleteActionsCacheById({
+                  owner,
+                  repo,
+                  cache_id: cache.id
+                });
+                
+                deletedCount++;
+                freedSpace += cache.size_in_bytes;
+              }
+            }
+            
+            if (isManual) {
+              console.log(`🚨 LIMPIEZA MANUAL: Todos los caches eliminados`);
+            }
+            console.log(`✅ Caches eliminados: ${deletedCount}`);
+            console.log(`💾 Espacio liberado: ${(freedSpace / 1024 / 1024 / 1024).toFixed(2)} GB`);
+
+  report-storage:
+    name: Report Storage Usage
+    runs-on: ubuntu-latest
+    needs: [cleanup-artifacts, cleanup-caches]
+    steps:
+      - name: Get storage usage statistics
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            
+            // Artifacts
+            const artifacts = await github.rest.actions.listArtifactsForRepo({
+              owner,
+              repo,
+              per_page: 100
+            });
+            
+            let totalArtifactsSize = 0;
+            for (const artifact of artifacts.data.artifacts) {
+              totalArtifactsSize += artifact.size_in_bytes;
+            }
+            
+            // Caches
+            const caches = await github.rest.actions.getActionsCacheList({
+              owner,
+              repo,
+              per_page: 100
+            });
+            
+            let totalCachesSize = 0;
+            for (const cache of caches.data.actions_caches) {
+              totalCachesSize += cache.size_in_bytes;
+            }
+            
+            console.log('');
+            console.log('═══════════════════════════════════════════');
+            console.log('📊 REPORTE DE ALMACENAMIENTO');
+            console.log('═══════════════════════════════════════════');
+            console.log(`📦 Artifacts: ${artifacts.data.total_count} archivos`);
+            console.log(`   Tamaño: ${(totalArtifactsSize / 1024 / 1024).toFixed(2)} MB`);
+            console.log('');
+            console.log(`💾 Caches: ${caches.data.actions_caches.length} entradas`);
+            console.log(`   Tamaño: ${(totalCachesSize / 1024 / 1024).toFixed(2)} MB`);
+            console.log('');
+            console.log(`📈 Total: ${((totalArtifactsSize + totalCachesSize) / 1024 / 1024).toFixed(2)} MB`);
+            console.log('═══════════════════════════════════════════');
+            
+            // Advertir si el storage es mayor a 500 MB
+            const totalMB = (totalArtifactsSize + totalCachesSize) / 1024 / 1024;
+            if (totalMB > 500) {
+              console.log('⚠️  ADVERTENCIA: Storage > 500 MB');
+              console.log('   Considera reducir retención o cache');
+            } else if (totalMB < 100) {
+              console.log('✅ Storage optimizado (<100 MB)');
+            }
