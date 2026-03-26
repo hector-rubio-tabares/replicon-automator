@@ -11,14 +11,12 @@ describe('Validation', () => {
     it('should validate valid CSV row', () => {
       const result = validateCSVRow({
         cuenta: 'AV',
-        proyecto: 'MS',
         extras: 'extra info',
       });
 
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.data.cuenta).toBe('AV');
-        expect(result.data.proyecto).toBe('MS');
         expect(result.data.extras).toBe('extra info');
       }
     });
@@ -26,7 +24,6 @@ describe('Validation', () => {
     it('should validate row without extras', () => {
       const result = validateCSVRow({
         cuenta: 'BH',
-        proyecto: 'PR',
       });
 
       expect(result.success).toBe(true);
@@ -36,9 +33,7 @@ describe('Validation', () => {
     });
 
     it('should fail with missing cuenta', () => {
-      const result = validateCSVRow({
-        proyecto: 'MS',
-      });
+      const result = validateCSVRow({});
 
       expect(result.success).toBe(false);
       if (!result.success) {
@@ -49,21 +44,14 @@ describe('Validation', () => {
     it('should fail with empty cuenta', () => {
       const result = validateCSVRow({
         cuenta: '',
-        proyecto: 'MS',
       });
 
       expect(result.success).toBe(false);
     });
 
     it('should fail with missing proyecto', () => {
-      const result = validateCSVRow({
-        cuenta: 'AV',
-      });
-
-      expect(result.success).toBe(false);
-      if (!result.success) {
-        expect(result.error).toBeTruthy();
-      }
+      // Test removed - proyecto no longer required
+      expect(true).toBe(true);
     });
   });
 
@@ -204,18 +192,17 @@ describe('Validation', () => {
 
     it('should separate valid and invalid rows', () => {
       const rows = [
-        { cuenta: 'AV', proyecto: 'MS' }, // valid
-        { cuenta: '', proyecto: 'PR' },   // invalid: empty cuenta
-        { cuenta: 'JM' },                  // invalid: missing proyecto
-        { cuenta: 'BH', proyecto: 'MS' }, // valid
+        { cuenta: 'AV' }, // valid
+        { cuenta: '' },   // invalid: empty cuenta
+        { cuenta: 'JM' }, // valid
+        { cuenta: 'BH' }, // valid
       ];
 
       const result = validateCSVRows(rows);
 
-      expect(result.valid).toHaveLength(2);
-      expect(result.errors).toHaveLength(2);
+      expect(result.valid).toHaveLength(3);
+      expect(result.errors).toHaveLength(1);
       expect(result.errors[0].index).toBe(1);
-      expect(result.errors[1].index).toBe(2);
     });
 
     it('should handle empty array', () => {

@@ -1,6 +1,5 @@
 import type { Credentials, CSVRow, AutomationProgress, LogEntry } from '@shared/types';
 import { LogsCompact } from '../../organisms/LogsCompact';
-import { ExecutionHistoryCompact } from '../../organisms/ExecutionHistory';
 import { useTranslation } from '@/i18n';
 import { useState } from 'react';
 interface AutomationTabProps {
@@ -8,7 +7,6 @@ interface AutomationTabProps {
   onCredentialsChange: (credentials: Credentials) => void;
   csvData: CSVRow[] | null;
   csvFileName: string | null;
-  onLoadCSV: () => Promise<void>;
   onStartAutomation: () => Promise<void>;
   onStopAutomation: () => Promise<void>;
   onPauseAutomation: () => Promise<void>;
@@ -22,7 +20,6 @@ export default function AutomationTab({
   onCredentialsChange,
   csvData,
   csvFileName,
-  onLoadCSV,
   onStartAutomation,
   onStopAutomation,
   onPauseAutomation,
@@ -146,32 +143,21 @@ export default function AutomationTab({
             </div>
           </div>
           {}
+          {csvFileName && csvData ? (
           <div className="card">
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
               <span className="text-2xl">📊</span>
               {t('csv.title')}
             </h2>
             <div className="flex items-center gap-4">
-              <button
-                onClick={onLoadCSV}
-                className="btn btn-secondary"
-                disabled={isRunning}
-                aria-label={t('csv.loadFile')}
-              >
-                📁 {t('csv.loadFile')}
-              </button>
               <div className="flex-1">
-                {csvFileName ? (
-                  <div className="flex items-center gap-3">
-                    <span className="text-emerald-500 dark:text-emerald-400">✓</span>
-                    <span className="text-gray-900 dark:text-white">{csvFileName}</span>
-                    <span className="text-gray-500 dark:text-slate-500">
-                      ({csvData?.length || 0} {t('csv.columns.date').toLowerCase()}s)
-                    </span>
-                  </div>
-                ) : (
-                  <span className="text-gray-500 dark:text-slate-500">{t('csv.noData')}</span>
-                )}
+                <div className="flex items-center gap-3">
+                  <span className="text-emerald-500 dark:text-emerald-400">✓</span>
+                  <span className="text-gray-900 dark:text-white">{csvFileName}</span>
+                  <span className="text-gray-500 dark:text-slate-500">
+                    ({csvData?.length || 0} {t('csv.columns.date').toLowerCase()}s)
+                  </span>
+                </div>
               </div>
             </div>
             {csvData && csvData.length > 0 && (
@@ -185,7 +171,6 @@ export default function AutomationTab({
                       <tr>
                         <th className="text-left py-1">{t('csv.columns.date')}</th>
                         <th className="text-left py-1">{t('automation.accounts')}</th>
-                        <th className="text-left py-1">{t('csv.columns.project')}</th>
                         <th className="text-left py-1">{t('csvEditor.extras')}</th>
                       </tr>
                     </thead>
@@ -194,7 +179,6 @@ export default function AutomationTab({
                         <tr key={index} className="text-gray-700 dark:text-slate-300">
                           <td className="py-1">{index + 1}</td>
                           <td className="py-1">{row.cuenta}</td>
-                          <td className="py-1">{row.proyecto}</td>
                           <td className="py-1 text-gray-500 dark:text-slate-500">
                             {row.extras || '-'}
                           </td>
@@ -212,6 +196,7 @@ export default function AutomationTab({
               </div>
             )}
           </div>
+          ) : null}
           {}
           {progress && status !== 'idle' && (
             <div className="card border-primary-500/30">
@@ -307,7 +292,6 @@ export default function AutomationTab({
           <div className="flex-1 min-h-0">
             <LogsCompact logs={logs} />
           </div>
-          <ExecutionHistoryCompact />
         </div>
       </div>
     </div>

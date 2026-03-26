@@ -1,38 +1,15 @@
 import { chromium, Browser } from 'playwright';
-import { createLogger, getChromiumLaunchOptions } from '../utils';
+import { createLogger, getChromiumLaunchOptions } from '../utils/index.js';
+import type {
+  AutomationCheckpoint,
+  DryRunResult,
+  ValidationResult,
+} from '../domain/automation/types.js';
+
 const logger = createLogger('AutomationEnhanced');
 let preloadedBrowser: Browser | null = null;
 let preloadPromise: Promise<void> | null = null;
-export interface AutomationCheckpoint {
-  id: string;
-  timestamp: number;
-  currentDay: number;
-  totalDays: number;
-  completedEntries: number[];
-  csvData: string;
-  status: 'in-progress' | 'paused' | 'error';
-  errorMessage?: string;
-  lastSuccessfulDay?: number;
-}
-export interface DryRunResult {
-  success: boolean;
-  totalDays: number;
-  workDays: number;
-  vacationDays: number;
-  holidayDays: number;
-  weekendDays: number;
-  totalEntries: number;
-  entriesPerDay: { day: number; count: number; entries: string[] }[];
-  warnings: string[];
-  errors: string[];
-  estimatedDuration: number;
-}
-export interface ValidationResult {
-  isValid: boolean;
-  errors: string[];
-  warnings: string[];
-  suggestions: string[];
-}
+
 export async function preloadBrowser(headless: boolean = true): Promise<void> {
   if (preloadedBrowser) {
     logger.info('Browser already preloaded');
@@ -81,8 +58,8 @@ export async function closeBrowser(): Promise<void> {
   }
 }
 export function validateAutomationData(
-  csvData: { cuenta: string; proyecto: string; extras?: string }[],
-  mappings: Record<string, { name: string; projects: Record<string, string> }>,
+  csvData: { cuenta: string; extras?: string }[],
+  mappings: Record<string, string>,
   horarios: { start_time: string; end_time: string }[]
 ): ValidationResult {
   const errors: string[] = [];
@@ -101,13 +78,11 @@ export function validateAutomationData(
     return { isValid: false, errors, warnings, suggestions };
   }
   const unmappedAccounts = new Set<string>();
-  const unmappedProjects = new Set<string>();
   let emptyRows = 0;
   let workDays = 0;
   csvData.forEach((row, index) => {
     const cuenta = row.cuenta?.trim().toUpperCase();
-    const proyecto = row.proyecto?.trim().toUpperCase();
-    if (!cuenta && !proyecto) {
+    if (!cuenta) {
       emptyRows++;
       return;
     }
@@ -119,21 +94,15 @@ export function validateAutomationData(
     if (!mappings[cuenta]) {
       unmappedAccounts.add(cuenta);
       warnings.push(`Fila ${index + 1}: Cuenta "${cuenta}" no está en el mapeo`);
-    } else {
-      const accountMapping = mappings[cuenta];
-      if (proyecto && !accountMapping.projects[proyecto]) {
-        unmappedProjects.add(`${cuenta}:${proyecto}`);
-        warnings.push(`Fila ${index + 1}: Proyecto "${proyecto}" no está mapeado para cuenta "${cuenta}"`);
-      }
     }
-    if (row.extras && row.extras.startsWith('EXT/')) {
-      const extParts = row.extras.slice(4).split(';');
+    if (row.extras && row.extras.trim()) {
+      const extParts = row.extras.split(';');
       extParts.forEach((part, partIndex) => {
         const trimmed = part.trim();
         if (!trimmed) return;
-        const components = trimmed.split(':');
-        if (components.length < 4) {
-          errors.push(`Fila ${index + 1}, Extra ${partIndex + 1}: Formato inválido "${trimmed}" (esperado: CUENTA:PROYECTO:INICIO:FIN)`);
+        const components = trimmed.split('-');
+        if (components.length !== 2) {
+          errors.push(`Fila ${index + 1}, Extra ${partIndex + 1}: Formato inválido "${trimmed}" (esperado: INICIO-FIN, ej: 0900-1100)`);
         }
       });
     }
@@ -164,8 +133,8 @@ export function validateAutomationData(
   };
 }
 export function dryRun(
-  csvData: { cuenta: string; proyecto: string; extras?: string }[],
-  mappings: Record<string, { name: string; projects: Record<string, string> }>,
+  csvData: { cuenta: string; extras?: string }[],
+  mappings: Record<string, string>,
   horarios: { start_time: string; end_time: string }[]
 ): DryRunResult {
   const warnings: string[] = [];
@@ -183,7 +152,6 @@ export function dryRun(
   };
   csvData.forEach((row, index) => {
     const cuenta = row.cuenta?.trim().toUpperCase() || '';
-    const proyecto = row.proyecto?.trim().toUpperCase() || '';
     const dayNum = index + 1;
     const dayEntries: string[] = [];
     if (specialAccounts.vacation.includes(cuenta)) {
@@ -196,7 +164,7 @@ export function dryRun(
       entriesPerDay.push({ day: dayNum, count: 0, entries: ['📅 Fin de semana'] });
       return;
     }
-    if (specialAccounts.noWork.includes(cuenta) && specialAccounts.noWork.includes(proyecto)) {
+    if (specialAccounts.noWork.includes(cuenta)) {
       holidayDays++;
       entriesPerDay.push({ day: dayNum, count: 0, entries: ['🎉 Día festivo / Sin trabajo'] });
       return;
@@ -204,30 +172,23 @@ export function dryRun(
     workDays++;
     if (mappings[cuenta]) {
       const mapping = mappings[cuenta];
-      const projectName = mapping.projects[proyecto] || proyecto;
       horarios.forEach((h) => {
         totalEntries++;
-        dayEntries.push(`${mapping.name} - ${projectName}: ${h.start_time} - ${h.end_time}`);
+        dayEntries.push(`${mapping}: ${h.start_time} - ${h.end_time}`);
       });
-    } else if (cuenta && proyecto) {
+    } else if (cuenta) {
       warnings.push(`Día ${dayNum}: Cuenta "${cuenta}" no mapeada`);
     }
-    if (row.extras && row.extras.startsWith('EXT/')) {
-      const extParts = row.extras.slice(4).split(';');
+    if (row.extras && row.extras.trim()) {
+      const extParts = row.extras.split(';');
       extParts.forEach((part) => {
         const trimmed = part.trim();
         if (!trimmed) return;
-        const components = trimmed.split(':');
-        if (components.length >= 4) {
-          const [extCuenta, extProyecto, inicio, fin] = components;
-          const extMapping = mappings[extCuenta.trim()];
-          if (extMapping) {
-            totalEntries++;
-            const projectName = extMapping.projects[extProyecto.trim()] || extProyecto.trim();
-            dayEntries.push(`[EXT] ${extMapping.name} - ${projectName}: ${inicio} - ${fin}`);
-          } else {
-            warnings.push(`Día ${dayNum}: Cuenta extra "${extCuenta}" no mapeada`);
-          }
+        const components = trimmed.split('-');
+        if (components.length === 2) {
+          const [inicio, fin] = components;
+          totalEntries++;
+          dayEntries.push(`[EXTRA]: ${inicio} - ${fin}`);
         }
       });
     }

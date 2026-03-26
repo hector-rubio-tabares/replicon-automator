@@ -2,14 +2,6 @@ import { describe, it, expect } from 'vitest';
 import { IPC } from '../common/ipc';
 
 describe('IPC Constants', () => {
-  it('should have CSV_LOAD channel', () => {
-    expect(IPC.CSV_LOAD).toBe('csv:load');
-  });
-
-  it('should have CSV_SAVE channel', () => {
-    expect(IPC.CSV_SAVE).toBe('csv:save');
-  });
-
   it('should have CREDENTIALS channels', () => {
     expect(IPC.CREDENTIALS_SAVE).toBe('credentials:save');
     expect(IPC.CREDENTIALS_LOAD).toBe('credentials:load');

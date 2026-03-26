@@ -1,25 +1,18 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { app } from 'electron';
-import { createLogger } from '../utils';
+import { createLogger } from '../utils/index.js';
 
 const logger = createLogger('PlaywrightRuntimeCheck');
 
 /**
  * Servicio para verificar y asegurar que Playwright está disponible en tiempo de ejecución
  * Útil después de actualizaciones donde los binarios pueden no estar presentes
+ * 
+ * @singleton - Mantiene estado de verificación y paths en memoria
  */
-export class PlaywrightRuntimeCheckService {
-    private static instance: PlaywrightRuntimeCheckService | null = null;
-
-    private constructor() { }
-
-    static getInstance(): PlaywrightRuntimeCheckService {
-        if (!PlaywrightRuntimeCheckService.instance) {
-            PlaywrightRuntimeCheckService.instance = new PlaywrightRuntimeCheckService();
-        }
-        return PlaywrightRuntimeCheckService.instance;
-    }
+class PlaywrightRuntimeCheckService {
+    constructor() { }
 
     /**
      * Verifica si Playwright está disponible en el sistema
@@ -54,7 +47,6 @@ export class PlaywrightRuntimeCheckService {
 
         for (const playwrightPath of paths) {
             if (!fs.existsSync(playwrightPath)) {
-                logger.info(`Playwright not found at: ${playwrightPath}`);
                 continue;
             }
 
@@ -72,7 +64,6 @@ export class PlaywrightRuntimeCheckService {
             }
         }
 
-        logger.warn('❌ Playwright binaries not found in any expected location');
         return false;
     }
 
@@ -84,14 +75,24 @@ export class PlaywrightRuntimeCheckService {
 
         try {
             const isAvailable = await this.checkPlaywrightAvailable();
+            const isDev = !app.isPackaged;
 
             if (!isAvailable) {
-                logger.error(
-                    '⚠️  WARNING: Playwright binaries not found. ' +
-                    'The application may fail to automate Replicon. ' +
-                    'Please reinstall the application or run "npm install" followed by ' +
-                    '"npx playwright install chromium --with-deps"'
-                );
+                // En desarrollo, solo log info ya que playwright puede estar en cache local
+                if (isDev) {
+                    logger.info(
+                        'Playwright binaries not found in node_modules. ' +
+                        'This is normal if using local cache. ' +
+                        'If automation fails, run: npx playwright install chromium'
+                    );
+                } else {
+                    // En producción, es un error crítico
+                    logger.error(
+                        '⚠️  WARNING: Playwright binaries not found. ' +
+                        'The application may fail to automate Replicon. ' +
+                        'Please reinstall the application.'
+                    );
+                }
             } else {
                 logger.info('✅ Playwright runtime check passed');
             }
@@ -127,4 +128,5 @@ export class PlaywrightRuntimeCheckService {
     }
 }
 
-export const playwrightRuntimeCheckService = PlaywrightRuntimeCheckService.getInstance();
+// Export singleton instance - Patrón B estándar
+export const playwrightRuntimeCheckService = new PlaywrightRuntimeCheckService();

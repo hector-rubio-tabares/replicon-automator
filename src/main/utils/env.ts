@@ -1,4 +1,4 @@
-import { createLogger } from './logger';
+import { createLogger } from './logger.js';
 const logger = createLogger('Env');
 interface EnvConfig {
   loginUrl: string;

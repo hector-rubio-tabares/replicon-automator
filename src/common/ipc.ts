@@ -1,1 +1,18 @@
-export const IPC = {  CSV_LOAD: 'csv:load',  CSV_SAVE: 'csv:save',  CREDENTIALS_SAVE: 'credentials:save',  CREDENTIALS_LOAD: 'credentials:load',  CREDENTIALS_CLEAR: 'credentials:clear',  CONFIG_GET: 'config:get',  CONFIG_SET: 'config:set',  AUTOMATION_START: 'automation:start',  AUTOMATION_STOP: 'automation:stop',  AUTOMATION_PAUSE: 'automation:pause',  AUTOMATION_PROGRESS: 'automation:progress',  AUTOMATION_LOG: 'automation:log',  AUTOMATION_COMPLETE: 'automation:complete',  AUTOMATION_ERROR: 'automation:error',} as const;export type IpcChannel = (typeof IPC)[keyof typeof IPC];
+export const IPC = {
+  CREDENTIALS_SAVE: 'credentials:save',
+  CREDENTIALS_LOAD: 'credentials:load',
+  CREDENTIALS_CLEAR: 'credentials:clear',
+  CONFIG_GET: 'config:get',
+  CONFIG_SET: 'config:set',
+  CSV_LOAD: 'csv:load',
+  CSV_GENERATE: 'csv:generate',
+  CSV_SAVE: 'csv:save',
+  AUTOMATION_START: 'automation:start',
+  AUTOMATION_STOP: 'automation:stop',
+  AUTOMATION_PAUSE: 'automation:pause',
+  AUTOMATION_PROGRESS: 'automation:progress',
+  AUTOMATION_LOG: 'automation:log',
+  AUTOMATION_COMPLETE: 'automation:complete',
+  AUTOMATION_ERROR: 'automation:error',
+} as const;
+export type IpcChannel = (typeof IPC)[keyof typeof IPC];

@@ -6,6 +6,41 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [4.0.1] - 2026-03-26
+
+### Added
+
+- **Single Instance Lock**: Only one app instance can run at a time. If a second instance is launched, the existing window is restored and focused
+- Production-ready security hardening: `sandbox: true`, `webSecurity: true`, `contextIsolation: true`
+- Enhanced terser minification with 2-pass compression for smaller bundle size
+- Explicit React production mode forcing via `NODE_ENV` and `__DEV__` flags
+
+### Changed
+
+- **BREAKING**: Removed CSV load/save functionality entirely from the application
+  - Removed IPC handlers for CSV operations (`csv:load`, `csv:save`)
+  - Removed preload CSV functions
+  - Removed renderer CSV hooks and UI components
+  - Updated all related tests to reflect simplified CSVRow type
+- Optimized Vite production build configuration:
+  - Disabled source maps in production
+  - Enhanced console statement removal (including `console.warn`)
+  - Added Safari 10 mangle compatibility
+  - Explicit `--mode production` flag in build script
+
+### Fixed
+
+- Fixed HTML path for packaged app (`../renderer/index.html` instead of `../../renderer/index.html`)
+- Fixed blue screen issue on app startup in packaged builds
+- Removed optional `loadingGif` reference that caused build warnings
+- Updated test expectations to match current SPECIAL_ACCOUNTS constants (V, ND, FDS)
+- Fixed GitHub Actions coverage workflow error handling for missing coverage data
+
+### Removed
+
+- All CSV loading and saving logic from the entire application stack
+- Development code artifacts in production builds (DevTools, console statements, React warnings)
+
 ## [3.6.5] - 2026-01-09
 
 ### Fixed

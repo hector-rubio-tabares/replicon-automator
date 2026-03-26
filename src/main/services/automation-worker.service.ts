@@ -1,9 +1,19 @@
 /**
- * Automation Service usando Worker Threads
+ * Automation Service usando Worker Threads.
  * Este servicio ejecuta Playwright en un thread separado para no bloquear el Main Process.
+ * 
+ * @instanciable - Factory pattern. Cada ejecución crea su propio worker con estado aislado.
+ * No debe ser singleton ya que cada automatización necesita su propio contexto.
+ * 
+ * @example
+ * const worker = new AutomationWorkerService(config, progressCb, logCb);
+ * await worker.start(credentials, csvData, horarios, mappings);
  */
 import { Worker } from 'worker_threads';
 import * as path from 'path';
+import * as fs from 'fs';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
 import type { BrowserWindow } from 'electron';
 import type {
   Credentials,
@@ -13,9 +23,12 @@ import type {
   AutomationProgress,
   LogEntry,
   AppConfig,
-} from '../../common/types';
-import { createLogger } from '../utils';
-import type { WorkerMessage, WorkerData } from '../workers/automation.worker';
+} from '../../common/types.js';
+import { createLogger } from '../utils/index.js';
+import type { WorkerMessage, WorkerData } from '../workers/automation.worker.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 const logger = createLogger('AutomationWorkerService');
 
@@ -44,7 +57,8 @@ export class AutomationWorkerService {
     credentials: Credentials,
     csvData: CSVRow[],
     horarios: TimeSlot[],
-    mappings: AccountMappings
+    mappings: AccountMappings,
+    selectedMonth: { year: number; month: number }
   ): Promise<{ success: boolean; error?: string }> {
     if (this.worker) {
       return { success: false, error: 'Ya hay una automatización en ejecución' };
@@ -58,21 +72,21 @@ export class AutomationWorkerService {
           horarios,
           mappings,
           config: this.config,
+          selectedMonth,
         };
 
-        // En desarrollo, usamos ts-node para ejecutar el worker
-        // En producción, usamos el archivo JS compilado
-        const isDev = process.env.NODE_ENV === 'development';
-        const workerPath = isDev
-          ? path.join(__dirname, '../workers/automation.worker.ts')
-          : path.join(__dirname, '../workers/automation.worker.js');
+        // Vite compila TypeScript automáticamente a dist/
+        // Usamos el archivo JS compilado tanto en dev como en prod
+        const workerPath = path.join(__dirname, '../workers/automation.worker.js');
+        logger.info('Worker path:', { workerPath, __dirname });
+
+        // Verificar que el archivo existe
+        if (!fs.existsSync(workerPath)) {
+          throw new Error(`Worker file not found: ${workerPath}`);
+        }
 
         this.worker = new Worker(workerPath, {
           workerData,
-          // Para TypeScript en desarrollo
-          ...(isDev && {
-            execArgv: ['--require', 'ts-node/register', '--require', 'tsconfig-paths/register'],
-          }),
         });
 
         this.worker.on('message', (message: WorkerMessage) => {
@@ -81,8 +95,14 @@ export class AutomationWorkerService {
 
         this.worker.on('error', (error) => {
           logger.error('Worker error:', error);
+          const errorMessage = error.message || String(error);
+          logger.error('Worker error details:', { 
+            message: errorMessage,
+            stack: error.stack,
+            name: error.name 
+          });
           this.cleanup();
-          resolve({ success: false, error: String(error) });
+          resolve({ success: false, error: errorMessage });
         });
 
         this.worker.on('exit', (code) => {

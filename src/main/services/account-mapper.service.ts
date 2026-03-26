@@ -1,9 +1,17 @@
-import type { AccountMappings } from '../../common/types';
-import { SPECIAL_ACCOUNTS } from '../../common/constants';
+import type { AccountMappings } from '../../common/types.js';
+import { normalizeAccountCode, isSpecialAccountCode } from '../../common/utils.js';
+import { SPECIAL_ACCOUNTS } from '../../common/constants.js';
 
 /**
- * Servicio centralizado para mapeo de cuentas y proyectos
- * Elimina código duplicado en múltiples archivos
+ * Servicio centralizado para mapeo de cuentas y proyectos.
+ * Elimina código duplicado en múltiples archivos.
+ * 
+ * @instanciable - Factory pattern. Cada instancia se crea con mappings específicos.
+ * Se recrea cuando los mappings cambian vía updateMappings().
+ * 
+ * @example
+ * const mapper = new AccountMapperService(mappings);
+ * const accountName = mapper.mapAccount('ACME');
  */
 export class AccountMapperService {
     private mappings: AccountMappings;
@@ -23,42 +31,22 @@ export class AccountMapperService {
      * Obtiene el nombre mapeado de una cuenta
      */
     mapAccount(cuenta: string): string {
-        const normalized = cuenta.trim().toUpperCase();
-        return this.mappings[normalized]?.name || cuenta;
-    }
-
-    /**
-     * Obtiene el nombre mapeado de un proyecto para una cuenta específica
-     */
-    mapProject(cuenta: string, proyecto: string): string {
-        const normalized = cuenta.trim().toUpperCase();
-        const projectNormalized = proyecto.trim().toUpperCase();
-
-        const accountMapping = this.mappings[normalized];
-        if (!accountMapping) {
-            return proyecto;
-        }
-
-        return accountMapping.projects[projectNormalized] || proyecto;
+        const normalized = normalizeAccountCode(cuenta);
+        return this.mappings[normalized] || cuenta;
     }
 
     /**
      * Verifica si una cuenta es especial (vacaciones, feriados, fin de semana)
      */
     isSpecialAccount(cuenta: string): boolean {
-        const normalized = cuenta.trim().toUpperCase();
-        return (
-            SPECIAL_ACCOUNTS.VACATION.includes(normalized) ||
-            SPECIAL_ACCOUNTS.NO_WORK.includes(normalized) ||
-            SPECIAL_ACCOUNTS.WEEKEND.includes(normalized)
-        );
+        return isSpecialAccountCode(cuenta);
     }
 
     /**
      * Verifica si es una cuenta de vacaciones
      */
     isVacation(cuenta: string): boolean {
-        const normalized = cuenta.trim().toUpperCase();
+        const normalized = normalizeAccountCode(cuenta);
         return SPECIAL_ACCOUNTS.VACATION.includes(normalized);
     }
 
@@ -66,7 +54,7 @@ export class AccountMapperService {
      * Verifica si es una cuenta de día no laboral
      */
     isNoWork(cuenta: string): boolean {
-        const normalized = cuenta.trim().toUpperCase();
+        const normalized = normalizeAccountCode(cuenta);
         return SPECIAL_ACCOUNTS.NO_WORK.includes(normalized);
     }
 
@@ -74,7 +62,7 @@ export class AccountMapperService {
      * Verifica si es una cuenta de fin de semana
      */
     isWeekend(cuenta: string): boolean {
-        const normalized = cuenta.trim().toUpperCase();
+        const normalized = normalizeAccountCode(cuenta);
         return SPECIAL_ACCOUNTS.WEEKEND.includes(normalized);
     }
 
@@ -82,23 +70,8 @@ export class AccountMapperService {
      * Verifica si una cuenta existe en los mappings
      */
     hasAccount(cuenta: string): boolean {
-        const normalized = cuenta.trim().toUpperCase();
+        const normalized = normalizeAccountCode(cuenta);
         return normalized in this.mappings;
-    }
-
-    /**
-     * Verifica si un proyecto existe para una cuenta específica
-     */
-    hasProject(cuenta: string, proyecto: string): boolean {
-        const normalized = cuenta.trim().toUpperCase();
-        const projectNormalized = proyecto.trim().toUpperCase();
-
-        const accountMapping = this.mappings[normalized];
-        if (!accountMapping) {
-            return false;
-        }
-
-        return projectNormalized in accountMapping.projects;
     }
 
     /**
@@ -109,35 +82,18 @@ export class AccountMapperService {
     }
 
     /**
-     * Obtiene todos los proyectos de una cuenta
-     */
-    getAccountProjects(cuenta: string): string[] {
-        const normalized = cuenta.trim().toUpperCase();
-        const accountMapping = this.mappings[normalized];
-
-        if (!accountMapping) {
-            return [];
-        }
-
-        return Object.keys(accountMapping.projects);
-    }
-
-    /**
      * Valida que todos los datos del CSV tengan mapping
      */
-    validateCSVData(csvData: { cuenta: string; proyecto: string }[]): {
+    validateCSVData(csvData: { cuenta: string }[]): {
         valid: boolean;
         unmappedAccounts: Set<string>;
-        unmappedProjects: Set<string>;
     } {
         const unmappedAccounts = new Set<string>();
-        const unmappedProjects = new Set<string>();
 
         csvData.forEach(row => {
-            const cuenta = row.cuenta?.trim().toUpperCase();
-            const proyecto = row.proyecto?.trim().toUpperCase();
+            const cuenta = normalizeAccountCode(row.cuenta || '');
 
-            if (!cuenta || !proyecto) {
+            if (!cuenta) {
                 return;
             }
 
@@ -149,18 +105,12 @@ export class AccountMapperService {
             // Verificar cuenta
             if (!this.hasAccount(cuenta)) {
                 unmappedAccounts.add(cuenta);
-            } else {
-                // Verificar proyecto
-                if (!this.hasProject(cuenta, proyecto)) {
-                    unmappedProjects.add(`${cuenta}:${proyecto}`);
-                }
             }
         });
 
         return {
-            valid: unmappedAccounts.size === 0 && unmappedProjects.size === 0,
+            valid: unmappedAccounts.size === 0,
             unmappedAccounts,
-            unmappedProjects,
         };
     }
 }

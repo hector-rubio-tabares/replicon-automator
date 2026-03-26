@@ -2,15 +2,12 @@ import type {
   AutomationProgress,
   ConfigKey,
   Credentials,
-  CSVRow,
   LogEntry,
   StartAutomationRequest,
 } from '@shared/types';
 declare global {
   interface Window {
     electronAPI: {
-      loadCSV: () => Promise<{ success: boolean; data?: CSVRow[]; error?: string; filePath?: string }>;
-      saveCSV: (data: CSVRow[]) => Promise<{ success: boolean; error?: string }>;
       saveCredentials: (credentials: Credentials) => Promise<boolean>;
       loadCredentials: () => Promise<Credentials | null>;
       clearCredentials: () => Promise<boolean>;

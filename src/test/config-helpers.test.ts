@@ -3,11 +3,8 @@ import {
   addHorario,
   removeHorario,
   updateHorario,
-  addAccount,
-  removeAccount,
-  addProject,
 } from '../common/config-helpers';
-import type { TimeSlot, AccountMappings } from '../common/types';
+import type { TimeSlot } from '../common/types';
 
 describe('Config Helpers', () => {
   describe('addHorario', () => {
@@ -111,141 +108,27 @@ describe('Config Helpers', () => {
   });
 
   describe('addAccount', () => {
-    it('should add new account to empty mappings', () => {
-      const result = addAccount({}, 'av', 'Avianca');
-
-      expect(result.AV).toBeDefined();
-      expect(result.AV.name).toBe('Avianca');
-      expect(result.AV.projects).toEqual({});
-    });
-
-    it('should convert account code to uppercase', () => {
-      const result = addAccount({}, 'jm', 'Jambojet');
-
-      expect(result.JM).toBeDefined();
-      expect(result.jm).toBeUndefined();
-    });
-
-    it('should trim whitespace from inputs', () => {
-      const result = addAccount({}, '  av  ', '  Avianca  ');
-
-      expect(result.AV.name).toBe('Avianca');
-    });
-
-    it('should return unchanged mappings if code is empty', () => {
-      const original: AccountMappings = { AV: { name: 'Avianca', projects: {} } };
-      const result = addAccount(original, '', 'Test');
-
-      expect(result).toEqual(original);
-    });
-
-    it('should return unchanged mappings if name is empty', () => {
-      const original: AccountMappings = { AV: { name: 'Avianca', projects: {} } };
-      const result = addAccount(original, 'JM', '');
-
-      expect(result).toEqual(original);
-    });
-
-    it('should not mutate original mappings', () => {
-      const original: AccountMappings = {};
-      addAccount(original, 'AV', 'Avianca');
-
-      expect(Object.keys(original)).toHaveLength(0);
-    });
+    it.skip('REMOVED: Account management functions removed', () => {});
+    it.skip('should convert account code to uppercase - REMOVED', () => {});
+    it.skip('should trim whitespace from inputs - REMOVED', () => {});
+    it.skip('should return unchanged mappings if code is empty - REMOVED', () => {});
+    it.skip('should return unchanged mappings if name is empty - REMOVED', () => {});
+    it.skip('should not mutate original mappings - REMOVED', () => {});
   });
 
   describe('removeAccount', () => {
-    it('should remove account by code', () => {
-      const mappings: AccountMappings = {
-        AV: { name: 'Avianca', projects: {} },
-        JM: { name: 'Jambojet', projects: {} },
-      };
-
-      const result = removeAccount(mappings, 'AV');
-
-      expect(result.AV).toBeUndefined();
-      expect(result.JM).toBeDefined();
-    });
-
-    it('should return same mappings if code not found', () => {
-      const mappings: AccountMappings = {
-        AV: { name: 'Avianca', projects: {} },
-      };
-
-      const result = removeAccount(mappings, 'NONEXISTENT');
-
-      expect(result).toEqual(mappings);
-    });
-
-    it('should not mutate original mappings', () => {
-      const original: AccountMappings = {
-        AV: { name: 'Avianca', projects: {} },
-      };
-
-      removeAccount(original, 'AV');
-
-      expect(original.AV).toBeDefined();
-    });
+    it.skip('should remove account by code - REMOVED', () => {});
+    it.skip('should return same mappings if code not found - REMOVED', () => {});
+    it.skip('should not mutate original mappings - REMOVED', () => {});
   });
 
   describe('addProject', () => {
-    const mappings: AccountMappings = {
-      AV: { name: 'Avianca', projects: {} },
-    };
-
-    it('should add project to existing account', () => {
-      const result = addProject(mappings, 'AV', 'ms', 'Avianca-Services-AM');
-
-      expect(result.AV.projects.MS).toBe('Avianca-Services-AM');
-    });
-
-    it('should convert project code to uppercase', () => {
-      const result = addProject(mappings, 'AV', 'pr', 'Projects');
-
-      expect(result.AV.projects.PR).toBe('Projects');
-      expect(result.AV.projects.pr).toBeUndefined();
-    });
-
-    it('should trim project code', () => {
-      const result = addProject(mappings, 'AV', '  ms  ', 'Services');
-
-      expect(result.AV.projects.MS).toBe('Services');
-    });
-
-    it('should return unchanged if account does not exist', () => {
-      const result = addProject(mappings, 'NONEXISTENT', 'MS', 'Test');
-
-      expect(result).toEqual(mappings);
-    });
-
-    it('should return unchanged if project code is empty', () => {
-      const result = addProject(mappings, 'AV', '', 'Test');
-
-      expect(result).toEqual(mappings);
-    });
-
-    it('should not mutate original mappings', () => {
-      const original: AccountMappings = {
-        AV: { name: 'Avianca', projects: {} },
-      };
-
-      addProject(original, 'AV', 'MS', 'Services');
-
-      expect(Object.keys(original.AV.projects)).toHaveLength(0);
-    });
-
-    it('should preserve existing projects', () => {
-      const withProjects: AccountMappings = {
-        AV: { 
-          name: 'Avianca', 
-          projects: { MS: 'Services' } 
-        },
-      };
-
-      const result = addProject(withProjects, 'AV', 'PR', 'Projects');
-
-      expect(result.AV.projects.MS).toBe('Services');
-      expect(result.AV.projects.PR).toBe('Projects');
-    });
+    it.skip('REMOVED: Project management functions removed', () => {});
+    it.skip('should convert project code to uppercase - REMOVED', () => {});
+    it.skip('should trim project code - REMOVED', () => {});
+    it.skip('should return unchanged if account does not exist - REMOVED', () => {});
+    it.skip('should return unchanged if project code is empty - REMOVED', () => {});
+    it.skip('should not mutate original mappings - REMOVED', () => {});
+    it.skip('should preserve existing projects - REMOVED', () => {});
   });
 });

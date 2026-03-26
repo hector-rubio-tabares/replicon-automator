@@ -1,1 +1,1 @@
-export { setupIPCHandlers } from './ipc.controller';
+export { setupIPCHandlers } from './ipc.controller.js';

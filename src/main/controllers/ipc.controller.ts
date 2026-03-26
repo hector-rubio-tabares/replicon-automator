@@ -1,235 +1,63 @@
-import { ipcMain, dialog, BrowserWindow } from 'electron';
-import Store from 'electron-store';
-import { PlaywrightAutomation, CSVService } from '../services';
-import { CredentialsService } from '../services/credentials.service';
-import * as automationEnhanced from '../services/automation-enhanced.service';
-import { logToFile } from '../utils/dev-logger';
-import { t } from '../i18n';
-import type { CSVRow } from '../../common/types';
-interface IPCControllerDeps {
+import type { BrowserWindow } from 'electron';
+import type Store from 'electron-store';
+import { AutomationWorkerService } from '../services/index.js';
+import { credentialsService } from '../services/credentials.service.js';
+import { setupCredentialsHandlers } from './handlers/credentials.ipc-handler.js';
+import { setupConfigHandlers } from './handlers/config.ipc-handler.js';
+import { setupLoggingHandlers } from './handlers/logging.ipc-handler.js';
+import { setupAutomationHandlers } from './handlers/automation.ipc-handler.js';
+import { setupUpdatesHandlers } from './handlers/updates.ipc-handler.js';
+
+/**
+ * Dependencias requeridas por el controlador IPC principal
+ */
+export interface IPCControllerDeps {
   store: Store<Record<string, unknown>>;
   getMainWindow: () => BrowserWindow | null;
-  getAutomation: () => PlaywrightAutomation | null;
-  setAutomation: (automation: PlaywrightAutomation | null) => void;
+  getAutomation: () => AutomationWorkerService | null;
+  setAutomation: (automation: AutomationWorkerService | null) => void;
   appVersion: string;
 }
+
+/**
+ * Configura todos los handlers IPC de la aplicación
+ * 
+ * Este es el orquestador principal que:
+ * 1. Instancia los servicios necesarios (Dependency Injection inversa)
+ * 2. Delega la configuración de handlers a módulos especializados
+ * 3. Pasa las dependencias apropiadas a cada handler
+ * 
+ * Sigue los principios SOLID:
+ * - SRP: Cada handler tiene una única responsabilidad
+ * - DIP: Los handlers reciben dependencias inyectadas
+ * - OCP: Extensible sin modificar código existente (agregar nuevo handler)
+ * 
+ * @param deps - Dependencias inyectadas desde main/index.ts
+ */
 export function setupIPCHandlers(deps: IPCControllerDeps): void {
   const { store, getMainWindow, getAutomation, setAutomation, appVersion } = deps;
-  const csvService = new CSVService();
-  const credentialsService = new CredentialsService();
-  automationEnhanced.preloadBrowser().catch(() => {
-    // Ignore preload errors
-  });
-  ipcMain.handle('csv:load', async () => {
-    const mainWindow = getMainWindow();
-    if (!mainWindow) return { success: false, error: 'No window available' };
-    const result = await dialog.showOpenDialog(mainWindow, {
-      properties: ['openFile'],
-      filters: [{ name: 'CSV Files', extensions: ['csv'] }],
-    });
-    if (result.canceled || result.filePaths.length === 0) {
-      return { success: false, error: 'Operación cancelada' };
-    }
-    return csvService.loadCSV(result.filePaths[0]);
-  });
-  ipcMain.handle('csv:save', async (_, data: CSVRow[]) => {
-    const mainWindow = getMainWindow();
-    if (!mainWindow) return { success: false, error: 'No window available' };
-    const result = await dialog.showSaveDialog(mainWindow, {
-      filters: [{ name: 'CSV Files', extensions: ['csv'] }],
-      defaultPath: 'replicon_data.csv',
-    });
-    if (result.canceled || !result.filePath) {
-      return { success: false, error: 'Operación cancelada' };
-    }
-    return csvService.saveCSV(result.filePath, data);
-  });
-  ipcMain.handle('credentials:save', async (_, credentials) => {
-    return credentialsService.saveCredentials(credentials);
-  });
-  ipcMain.handle('credentials:load', async () => {
-    return credentialsService.loadCredentials();
-  });
-  ipcMain.handle('credentials:clear', async () => {
-    return credentialsService.clearCredentials();
-  });
-  ipcMain.handle('config:get', async (_, key: string) => {
-    const value = store.get(key);
 
-    // Si es la config de la app y no tiene loginUrl, usar el de env
-    if (key === 'config' && value && typeof value === 'object') {
-      const appConfig = value as { loginUrl?: string; timeout?: number; headless?: boolean; autoSave?: boolean };
-      if (!appConfig.loginUrl || appConfig.loginUrl.trim() === '') {
-        return {
-          ...appConfig,
-          loginUrl: process.env.REPLICON_LOGIN_URL || '',
-        };
-      }
-    }
+  // credentialsService es singleton importado directamente
 
-    return value;
+  // Configurar handlers por dominio, pasando solo las dependencias necesarias
+  setupCredentialsHandlers({
+    credentialsService,
   });
-  ipcMain.handle('config:set', async (_, key: string, value: unknown) => {
-    store.set(key, value);
-    return true;
-  });
-  ipcMain.on('renderer:log', (_, data: { level: string; source: string; message: string }) => {
-    logToFile(data.level, `RENDERER:${data.source}`, data.message);
-  });
-  ipcMain.handle('automation:start', async (_, request) => {
-    const mainWindow = getMainWindow();
-    if (getAutomation()) {
-      return { success: false, error: 'Ya hay una automatización en ejecución' };
-    }
 
-    // Validar configuración - tomar de .env si está vacío
-    const config = {
-      ...request.config,
-      loginUrl: request.config.loginUrl || process.env.REPLICON_LOGIN_URL || '',
-      timeout: request.config.timeout || Number(process.env.REPLICON_TIMEOUT) || 45000,
-    };
+  setupConfigHandlers({
+    store,
+  });
 
-    // Validar que loginUrl no esté vacío
-    if (!config.loginUrl || config.loginUrl.trim() === '') {
-      return {
-        success: false,
-        error: t('errors.loginUrlMissing')
-      };
-    }
+  setupLoggingHandlers();
 
-    const automation = new PlaywrightAutomation(
-      config,
-      (progress) => mainWindow?.webContents.send('automation:progress', progress),
-      (log) => mainWindow?.webContents.send('automation:log', log)
-    );
-    setAutomation(automation);
-    try {
-      await automation.start(request.credentials, request.csvData, request.horarios, request.mappings);
-      mainWindow?.webContents.send('automation:complete', { success: true });
-      return { success: true };
-    } catch (error) {
-      mainWindow?.webContents.send('automation:error', { error: String(error) });
-      return { success: false, error: String(error) };
-    } finally {
-      setAutomation(null);
-    }
+  setupAutomationHandlers({
+    getMainWindow,
+    getAutomation,
+    setAutomation,
+    AutomationServiceClass: AutomationWorkerService,
   });
-  ipcMain.handle('automation:stop', async () => {
-    const automation = getAutomation();
-    if (automation) {
-      await automation.stop();
-      setAutomation(null);
-    }
-    return { success: true };
-  });
-  ipcMain.handle('automation:pause', async () => {
-    const automation = getAutomation();
-    if (automation) {
-      automation.togglePause();
-    }
-    return { success: true };
-  });
-  ipcMain.handle('automation:validate', async (_, data: { csvData: CSVRow[]; mappings: Record<string, unknown>; horarios: unknown[] }) => {
-    try {
-      const result = automationEnhanced.validateAutomationData(
-        data.csvData,
-        data.mappings as Record<string, { name: string; projects: Record<string, string> }>,
-        data.horarios as { start_time: string; end_time: string }[]
-      );
-      return { success: true, result };
-    } catch (error) {
-      return { success: false, error: String(error) };
-    }
-  });
-  ipcMain.handle('automation:dryRun', async (_, data: { csvData: CSVRow[]; mappings: Record<string, unknown>; horarios: unknown[] }) => {
-    try {
-      const result = automationEnhanced.dryRun(
-        data.csvData,
-        data.mappings as Record<string, { name: string; projects: Record<string, string> }>,
-        data.horarios as { start_time: string; end_time: string }[]
-      );
-      return { success: true, result };
-    } catch (error) {
-      return { success: false, error: String(error) };
-    }
-  });
-  ipcMain.handle('automation:saveCheckpoint', async (_, checkpoint) => {
-    try {
-      automationEnhanced.saveCheckpoint(checkpoint);
-      return { success: true };
-    } catch (error) {
-      return { success: false, error: String(error) };
-    }
-  });
-  ipcMain.handle('automation:loadCheckpoint', async (_, automationId) => {
-    try {
-      const checkpoint = await automationEnhanced.loadCheckpoint(automationId);
-      return { success: true, checkpoint };
-    } catch (error) {
-      return { success: false, error: String(error) };
-    }
-  });
-  ipcMain.handle('automation:hasPendingRecovery', async () => {
-    try {
-      const hasPending = await automationEnhanced.hasPendingRecovery();
-      return { success: true, hasPending };
-    } catch (error) {
-      return { success: false, error: String(error) };
-    }
-  });
-  ipcMain.handle('automation:getPendingCheckpoints', async () => {
-    try {
-      const checkpoints = await automationEnhanced.getPendingCheckpoints();
-      return { success: true, checkpoints };
-    } catch (error) {
-      return { success: false, error: String(error) };
-    }
-  });
-  ipcMain.handle('automation:clearCheckpoint', async (_, automationId) => {
-    try {
-      await automationEnhanced.clearCheckpoint(automationId);
-      return { success: true };
-    } catch (error) {
-      return { success: false, error: String(error) };
-    }
-  });
-  ipcMain.handle('automation:isEncryptionAvailable', async () => {
-    return credentialsService.isEncryptionAvailable();
-  });
-  ipcMain.handle('app:version', () => appVersion);
-  ipcMain.handle('app:check-updates', async () => {
-    try {
-      const { updaterService } = await import('../services/updater.service');
-      const result = await updaterService.checkForUpdates();
-      return result;
-    } catch {
-      return { updateAvailable: false, version: appVersion };
-    }
-  });
-  ipcMain.handle('app:download-update', async () => {
-    try {
-      const { updaterService } = await import('../services/updater.service');
-      await updaterService.downloadUpdate();
-      return { success: true };
-    } catch (error) {
-      return { success: false, error: String(error) };
-    }
-  });
-  ipcMain.handle('app:install-update', async () => {
-    try {
-      const { updaterService } = await import('../services/updater.service');
-      updaterService.installUpdate();
-      return { success: true };
-    } catch (error) {
-      return { success: false, error: String(error) };
-    }
-  });
-  ipcMain.handle('app:is-update-downloaded', async () => {
-    try {
-      const { updaterService } = await import('../services/updater.service');
-      return updaterService.isUpdateDownloaded();
-    } catch {
-      return false;
-    }
+
+  setupUpdatesHandlers({
+    appVersion,
   });
 }

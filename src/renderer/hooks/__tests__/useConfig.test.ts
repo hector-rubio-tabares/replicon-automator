@@ -153,7 +153,7 @@ describe('useConfig Hook', () => {
       const { result } = renderHook(() => useConfig());
 
       const newMappings = {
-        NEW: { name: 'New Account', projects: { P1: 'Project 1' } },
+        NEW: 'New Account',
       };
 
       act(() => {
@@ -172,7 +172,7 @@ describe('useConfig Hook', () => {
       const { result } = renderHook(() => useConfig());
 
       const newMappings = {
-        NEW: { name: 'New Account', projects: {} },
+        NEW: 'New Account',
       };
 
       act(() => {

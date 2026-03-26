@@ -1,11 +1,57 @@
 import { contextBridge, ipcRenderer, IpcRendererEvent } from 'electron';
-import type { 
-  StartAutomationRequest, 
-  Credentials, 
-  CSVRow, 
-  AutomationProgress,
-  LogEntry 
-} from '../common/types';
+
+// Type definitions inlined to avoid TypeScript rootDir issues with preload compilation
+// These are duplicated from src/common/types.ts - kept in sync manually
+interface CSVRow {
+  cuenta: string;
+  extras?: string;
+}
+
+interface Credentials {
+  email: string;
+  password: string;
+  rememberMe: boolean;
+}
+
+interface LogEntry {
+  timestamp: Date;
+  level: 'info' | 'warning' | 'error' | 'success';
+  message: string;
+}
+
+interface AutomationProgress {
+  status: 'idle' | 'running' | 'paused' | 'completed' | 'error';
+  currentDay: number;
+  totalDays: number;
+  currentEntry: number;
+  totalEntries: number;
+  message: string;
+  logs: LogEntry[];
+}
+
+interface TimeSlot {
+  id: string;
+  start_time: string;
+  end_time: string;
+}
+
+// AccountMappings now flat: code → name (string)
+type AccountMappings = Record<string, string>;
+
+interface AppConfig {
+  loginUrl: string;
+  timeout: number;
+  headless: boolean;
+  autoSave: boolean;
+}
+
+interface StartAutomationRequest {
+  credentials: Credentials;
+  csvData: CSVRow[];
+  horarios: TimeSlot[];
+  mappings: AccountMappings;
+  config: AppConfig;
+}
 
 // Helper para crear listeners seguros sin memory leaks
 function createSafeListener<T>(
@@ -18,10 +64,6 @@ function createSafeListener<T>(
 }
 
 contextBridge.exposeInMainWorld('electronAPI', {
-  // CSV Operations
-  loadCSV: () => ipcRenderer.invoke('csv:load'),
-  saveCSV: (data: CSVRow[]) => ipcRenderer.invoke('csv:save', data),
-  
   // Credentials
   saveCredentials: (credentials: Credentials) => 
     ipcRenderer.invoke('credentials:save', credentials),
