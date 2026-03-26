@@ -3,11 +3,8 @@ import {
   addHorario,
   removeHorario,
   updateHorario,
-  addAccount,
-  removeAccount,
-  addProject,
 } from '../common/config-helpers';
-import type { TimeSlot, AccountMappings } from '../common/types';
+import type { TimeSlot } from '../common/types';
 
 describe('Config Helpers', () => {
   describe('addHorario', () => {

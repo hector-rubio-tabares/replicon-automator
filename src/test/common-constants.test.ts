@@ -64,15 +64,15 @@ describe('Constants', () => {
 
   describe('SPECIAL_ACCOUNTS', () => {
     it('should have VACATION accounts', () => {
-      expect(SPECIAL_ACCOUNTS.VACATION).toEqual(['H', 'F']);
+      expect(SPECIAL_ACCOUNTS.VACATION).toEqual(['V']);
     });
 
     it('should have NO_WORK accounts', () => {
-      expect(SPECIAL_ACCOUNTS.NO_WORK).toEqual(['BH']);
+      expect(SPECIAL_ACCOUNTS.NO_WORK).toEqual(['ND']);
     });
 
     it('should have WEEKEND accounts', () => {
-      expect(SPECIAL_ACCOUNTS.WEEKEND).toEqual(['FDS', 'ND']);
+      expect(SPECIAL_ACCOUNTS.WEEKEND).toEqual(['FDS']);
     });
   });
 
@@ -94,14 +94,13 @@ describe('Constants', () => {
   });
 
   describe('DEFAULT_MAPPINGS', () => {
-    it('should have BH mapping', () => {
-      expect(DEFAULT_MAPPINGS.BH).toBeDefined();
-      expect(DEFAULT_MAPPINGS.BH).toBe('No work');
+    it('should have ND mapping', () => {
+      expect(DEFAULT_MAPPINGS.ND).toBeDefined();
+      expect(DEFAULT_MAPPINGS.ND).toBe('No Data');
     });
 
     it('should have vacation mappings', () => {
-      expect(DEFAULT_MAPPINGS.H).toBe('Vacation');
-      expect(DEFAULT_MAPPINGS.F).toBe('Vacation');
+      expect(DEFAULT_MAPPINGS.V).toBe('Vacaciones');
     });
 
     it.skip('should have Avianca mapping - REMOVED: Business mappings removed', () => {});
@@ -126,7 +125,7 @@ describe('Constants', () => {
       
       expect(template).toBeDefined();
       expect(template?.rows).toHaveLength(7);
-      expect(template?.rows[0].cuenta).toBe('H');
+      expect(template?.rows[0].cuenta).toBe('V');
     });
 
     it.skip('should have mixed projects template - REMOVED: No project support', () => {});

@@ -70,17 +70,15 @@ describe('AccountMapperService', () => {
 
   describe('isSpecialAccount', () => {
     it('should detect vacation accounts', () => {
-      expect(service.isSpecialAccount('H')).toBe(true);
-      expect(service.isSpecialAccount('F')).toBe(true);
+      expect(service.isSpecialAccount('V')).toBe(true);
     });
 
     it('should detect no-work accounts', () => {
-      expect(service.isSpecialAccount('BH')).toBe(true);
+      expect(service.isSpecialAccount('ND')).toBe(true);
     });
 
     it('should detect weekend accounts', () => {
       expect(service.isSpecialAccount('FDS')).toBe(true);
-      expect(service.isSpecialAccount('ND')).toBe(true);
     });
 
     it('should return false for regular accounts', () => {
@@ -90,23 +88,22 @@ describe('AccountMapperService', () => {
 
   describe('isVacation', () => {
     it('should detect vacation', () => {
-      expect(service.isVacation('H')).toBe(true);
-      expect(service.isVacation('F')).toBe(true);
+      expect(service.isVacation('V')).toBe(true);
     });
 
     it('should not detect non-vacation', () => {
-      expect(service.isVacation('BH')).toBe(false);
+      expect(service.isVacation('ND')).toBe(false);
       expect(service.isVacation('AV')).toBe(false);
     });
   });
 
   describe('isNoWork', () => {
     it('should detect no-work', () => {
-      expect(service.isNoWork('BH')).toBe(true);
+      expect(service.isNoWork('ND')).toBe(true);
     });
 
     it('should not detect non-no-work', () => {
-      expect(service.isNoWork('H')).toBe(false);
+      expect(service.isNoWork('V')).toBe(false);
       expect(service.isNoWork('AV')).toBe(false);
     });
   });
@@ -114,7 +111,6 @@ describe('AccountMapperService', () => {
   describe('isWeekend', () => {
     it('should detect weekend', () => {
       expect(service.isWeekend('FDS')).toBe(true);
-      expect(service.isWeekend('ND')).toBe(true);
     });
 
     it('should not detect non-weekend', () => {

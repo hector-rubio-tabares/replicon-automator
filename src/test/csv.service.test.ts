@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import * as fs from 'fs';
 import { CSVService } from '../main/services/csv.service';
 import type { CSVRow } from '../common/types';
@@ -25,7 +25,8 @@ JM,PR,EXT/AV:MS:1000:1200`;
 
       expect(result.success).toBe(true);
       expect(result.data).toHaveLength(2);
-      expect(result.data?.[0]).toEqual({ cuenta: 'AV', extras: '' });
+      expect(result.data?.[0].cuenta).toBe('AV');
+      expect(result.data?.[0].extras).toBe('');
     });
 
     it('should handle file read error', () => {
@@ -49,7 +50,7 @@ JM,PR,EXT/AV:MS:1000:1200`;
       const result = service.loadCSV('/path/to/file.csv');
 
       expect(result.data?.[0].cuenta).toBe('AV');
-      expect(result.data?.[0].proyecto).toBe('MS');
+      expect(result.data?.[0].extras).toBe('');
     });
 
     it('should handle CSV parse errors', () => {
@@ -106,7 +107,7 @@ AV,MS,`;
         throw new Error('Write failed');
       });
 
-      const data: CSVRow[] = [{ cuenta: 'AV', proyecto: 'MS', extras: '' }];
+      const data: CSVRow[] = [{ cuenta: 'AV', extras: '' }];
       const result = service.saveCSV('/invalid/path.csv', data);
 
       expect(result.success).toBe(false);
@@ -121,7 +122,7 @@ AV,MS,`;
     });
 
     it('should include headers in CSV', () => {
-      const data: CSVRow[] = [{ cuenta: 'AV', proyecto: 'MS', extras: '' }];
+      const data: CSVRow[] = [{ cuenta: 'AV', extras: '' }];
 
       service.saveCSV('/path/to/output.csv', data);
 
@@ -160,7 +161,7 @@ AV,MS,`;
 
     it('should cycle through template rows', () => {
       const template: CSVRow[] = [
-        { cuenta: 'AV', proyecto: 'MS', extras: '' },
+        { cuenta: 'AV', extras: '' },
       ];
 
       const result = service.generateFromTemplate(template, 3);
@@ -172,7 +173,7 @@ AV,MS,`;
     });
 
     it('should handle zero days', () => {
-      const template: CSVRow[] = [{ cuenta: 'AV', proyecto: 'MS', extras: '' }];
+      const template: CSVRow[] = [{ cuenta: 'AV', extras: '' }];
 
       const result = service.generateFromTemplate(template, 0);
 
@@ -180,7 +181,7 @@ AV,MS,`;
     });
 
     it('should create copies of template rows', () => {
-      const template: CSVRow[] = [{ cuenta: 'AV', proyecto: 'MS', extras: '' }];
+      const template: CSVRow[] = [{ cuenta: 'AV', extras: '' }];
 
       const result = service.generateFromTemplate(template, 2);
 
