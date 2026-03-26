@@ -12,7 +12,7 @@
     "dev:renderer": "vite",
     "prebuild": "npm run ensure-playwright && npm run prepare-playwright",
     "build": "cross-env NODE_ENV=production npm run prebuild && npm run build:renderer && npm run build:main && npm run build:preload && npm run copy:playwright",
-    "build:renderer": "cross-env NODE_ENV=production vite build",
+    "build:renderer": "cross-env NODE_ENV=production vite build --mode production",
     "build:main": "cross-env NODE_ENV=production tsc -p tsconfig.main.json",
     "build:preload": "cross-env NODE_ENV=production tsc -p tsconfig.preload.json",
     "prepare-playwright": "node scripts/prepare-playwright-build.cjs",

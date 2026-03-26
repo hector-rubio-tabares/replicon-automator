@@ -5,13 +5,18 @@ import { fileURLToPath } from 'url'
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), ['REPLICON_', 'VITE_'])
+  const isProduction = mode === 'production'
+  
   return {
     plugins: [react()],
     define: {
+      'process.env.NODE_ENV': JSON.stringify(mode),
       'process.env.REPLICON_LOGIN_URL': JSON.stringify(env.REPLICON_LOGIN_URL),
       'process.env.REPLICON_TIMEOUT': JSON.stringify(env.REPLICON_TIMEOUT),
       'process.env.REPLICON_HEADLESS': JSON.stringify(env.REPLICON_HEADLESS),
       'process.env.REPLICON_AUTOSAVE': JSON.stringify(env.REPLICON_AUTOSAVE),
+      // Eliminar __DEV__ de React en producción
+      __DEV__: !isProduction,
     },
     base: './',
     root: 'src/renderer',
@@ -19,16 +24,21 @@ export default defineConfig(({ mode }) => {
     build: {
       outDir: '../../dist/renderer',
       emptyOutDir: true,
-      chunkSizeWarningLimit: 1000, // 1MB is acceptable for Electron apps (local loading)
+      chunkSizeWarningLimit: 1000,
       minify: 'terser',
+      sourcemap: false, // No source maps en producción
       terserOptions: {
         compress: {
-          drop_console: true, // Eliminar console.logs en producción
+          drop_console: true,
           drop_debugger: true,
-          pure_funcs: ['console.log', 'console.info', 'console.debug'],
+          pure_funcs: ['console.log', 'console.info', 'console.debug', 'console.warn'],
+          passes: 2, // Múltiples pasadas para mejor minificación
         },
         format: {
-          comments: false, // Eliminar comentarios
+          comments: false,
+        },
+        mangle: {
+          safari10: true, // Compatibilidad Safari
         },
       },
       rollupOptions: {

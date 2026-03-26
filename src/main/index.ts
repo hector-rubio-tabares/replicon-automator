@@ -187,7 +187,14 @@ function createWindow(): void {
     const devUrl = `http://localhost:${devPort}`;
     mainWindow.loadURL(devUrl);
   } else {
-    const htmlPath = path.join(__dirname, '../../renderer/index.html');
+    // En producción, la estructura es: resources/app.asar/dist/main/index.js
+    // Necesitamos cargar: resources/app.asar/dist/renderer/index.html
+    const htmlPath = path.join(__dirname, '../renderer/index.html');
+    productionLogger.info('[Renderer] Loading HTML', { 
+      htmlPath, 
+      __dirname,
+      exists: fs.existsSync(htmlPath) 
+    });
     mainWindow.loadFile(htmlPath);
   }
 

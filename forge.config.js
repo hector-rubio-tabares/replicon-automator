@@ -26,7 +26,7 @@ export default {
         name: 'RepliconAutomator',
         setupIcon: join(__dirname, 'assets', 'icon.ico'),
         iconUrl: 'https://raw.githubusercontent.com/hector26rubio2/replicon-automator/main/assets/icon.ico',
-        loadingGif: join(__dirname, 'assets', 'install.gif'),
+        // loadingGif: Opcional - removido por ahora
       },
     },
     {
