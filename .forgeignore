@@ -1,0 +1,38 @@
+# Development files
+src/
+scripts/
+docs/
+.github/
+coverage/
+test/
+
+# Build outputs (not dist - we need it!)
+out/
+release/
+
+# Config files
+tsconfig*.json
+vite.config.ts
+vitest.config.ts
+.eslintrc.*
+.prettierrc.*
+forge.config.js
+
+# IDE
+.vscode/
+.idea/
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# Misc
+*.md
+!README.md
+*.log
+*.bak
+*.swp
+.DS_Store
+Thumbs.db
+.env.example

@@ -7,6 +7,7 @@ const __dirname = dirname(__filename);
 export default {
   packagerConfig: {
     asar: true,
+    prune: false, // Do NOT prune based on .gitignore - include everything
     asarUnpack: [
       '**/node_modules/playwright/**/*',
     ],
@@ -18,37 +19,6 @@ export default {
       join(__dirname, 'playwright-bin'),
       join(__dirname, '.env.production'),
     ],
-    // DO NOT ignore dist/ - it contains the compiled app
-    ignore: (path) => {
-      if (!path) return false;
-      
-      // Normalize path (remove leading slash if present)
-      const normalizedPath = path.startsWith('/') ? path.substring(1) : path;
-      
-      // Always include dist/ (compiled code - CRITICAL)
-      if (normalizedPath.startsWith('dist')) return false;
-      
-      // Always include node_modules (dependencies)
-      if (normalizedPath.startsWith('node_modules')) return false;
-      
-      // Always include critical files
-      if (normalizedPath.startsWith('assets')) return false;
-      if (normalizedPath.startsWith('playwright-bin')) return false;
-      if (normalizedPath === 'package.json') return false;
-      if (normalizedPath === '.env.production') return false;
-      
-      // Ignore development and source files
-      if (normalizedPath.match(/^(src|scripts|docs|\.github|coverage|test|out|release)($|\/)/)) return true;
-      if (normalizedPath.match(/\.(ts|tsx|test\.js|spec\.js)$/)) return true;
-      if (normalizedPath.match(/^\.git($|\/)/)) return true;
-      if (normalizedPath.match(/^\.(gitignore|eslintrc|prettierrc|env\.example)/)) return true;
-      if (normalizedPath.match(/tsconfig.*\.json$/)) return true;
-      if (normalizedPath.match(/vitest\.config\./)) return true;
-      if (normalizedPath.match(/vite\.config\./)) return true;
-      
-      // Include everything else by default
-      return false;
-    },
   },
   makers: [
     {
