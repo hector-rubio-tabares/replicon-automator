@@ -21,9 +21,9 @@
     "diagnose:playwright": "node scripts/diagnose-playwright.cjs",
     "postinstall": "npm run ensure-playwright",
     "clean": "node scripts/prebuild-cleanup.cjs",
-    "package": "cross-env NODE_ENV=production npm run clean && npm run build && electron-forge package",
-    "make": "cross-env NODE_ENV=production npm run clean && npm run build && electron-forge make",
-    "make:win": "cross-env NODE_ENV=production npm run clean && npm run build && electron-forge make --platform=win32",
+    "package": "cross-env NODE_ENV=production npm run clean && npm run build && electron-builder --dir",
+    "dist": "cross-env NODE_ENV=production npm run clean && npm run build && electron-builder",
+    "dist:win": "cross-env NODE_ENV=production npm run clean && npm run build && electron-builder --win --x64",
     "lint": "eslint src --ext .ts,.tsx",
     "lint:fix": "eslint src --ext .ts,.tsx --fix",
     "typecheck": "tsc --noEmit",
@@ -68,6 +68,8 @@
     "concurrently": "^8.2.2",
     "cross-env": "^7.0.3",
     "electron": "^39.2.7",
+    "electron-builder": "^26.8.1",
+    "electron-builder-squirrel-windows": "^26.8.1",
     "eslint": "^8.55.0",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-react": "^7.33.2",
@@ -97,5 +99,66 @@
     "*.{json,md}": [
       "echo 'Skipping prettier'"
     ]
+  },
+  "build": {
+    "appId": "com.hdrt.replicon-automator",
+    "productName": "Replicon Automator",
+    "directories": {
+      "output": "release",
+      "buildResources": "assets"
+    },
+    "files": [
+      "dist/**/*",
+      "!playwright-bin"
+    ],
+    "asarUnpack": [
+      "**/node_modules/playwright/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "playwright-bin",
+        "to": "playwright-bin",
+        "filter": [
+          "**/*"
+        ]
+      },
+      {
+        "from": ".env.production",
+        "to": ".env.production"
+      }
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "assets/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "deleteAppDataOnUninstall": false,
+      "artifactName": "Replicon.Automator.Setup.${ext}"
+    },
+    "portable": {
+      "artifactName": "Replicon.Automator.Portable.${ext}"
+    },
+    "publish": {
+      "provider": "github",
+      "owner": "hector26rubio2",
+      "repo": "replicon-automator",
+      "releaseType": "release"
+    }
   }
 }

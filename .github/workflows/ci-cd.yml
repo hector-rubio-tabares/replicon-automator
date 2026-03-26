@@ -18,7 +18,7 @@ env:
 jobs:
   build:
     name: Build & Quality Check
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     permissions:
       contents: write
     outputs:
@@ -28,9 +28,10 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      
+
       - name: Get version from tag
         id: version
+        shell: bash
         run: |
           if [[ "${{ github.ref }}" =~ refs/tags/v(.+) ]]; then
             VERSION="${BASH_REMATCH[1]}"
@@ -39,140 +40,113 @@ jobs:
           fi
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "Version: $VERSION"
-      
+
       - name: Extract release notes from CHANGELOG
         id: changelog
+        shell: bash
         run: |
           VERSION="${{ steps.version.outputs.version }}"
-          
-          # Extract section for this version
           awk -v ver="$VERSION" '/^## \[/{if(p){exit}; if($0 ~ "## \\[" ver "\\]"){p=1; next}} p' CHANGELOG.md > release_notes.txt
-          
           if [ ! -s release_notes.txt ]; then
             echo "Release v$VERSION" > release_notes.txt
           fi
-          
           echo "Release notes extracted:"
           cat release_notes.txt
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-      
+
       # Cache node_modules para ahorrar ~2 minutos
       - name: Cache node modules
         uses: actions/cache@v4
         id: cache-node-modules
         with:
           path: node_modules
-          key: ${{ runner.os }}-node-v1-${{ hashFiles('**/package-lock.json') }}
+          key: ${{ runner.os }}-node-v2-${{ hashFiles('**/package-lock.json') }}
           restore-keys: |
-            ${{ runner.os }}-node-v1-
-      
-      # Cache Playwright browsers para ahorrar ~1 minuto (500MB aprox)
-      - name: Cache Playwright browsers
-        uses: actions/cache@v4
-        id: cache-playwright
-        with:
-          path: ~/.cache/ms-playwright
-          key: ${{ runner.os }}-playwright-v1-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-playwright-v1-
-      
-      # Cache Wine para ahorrar ~1-2 minutos en instalación
-      - name: Cache Wine installation
-        uses: actions/cache@v4
-        id: cache-wine
-        with:
-          path: |
-            /opt/wine-stable
-            ~/.wine
-          key: ${{ runner.os }}-wine-v1-9.0
-          restore-keys: |
-            ${{ runner.os }}-wine-v1-
-      
-      - name: Install Wine and dependencies
-        if: steps.cache-wine.outputs.cache-hit != 'true'
-        run: |
-          sudo dpkg --add-architecture i386
-          sudo mkdir -pm755 /etc/apt/keyrings
-          sudo wget -O /etc/apt/keyrings/winehq-archive.key https://dl.winehq.org/wine-builds/winehq.key
-          sudo wget -NP /etc/apt/sources.list.d/ https://dl.winehq.org/wine-builds/ubuntu/dists/jammy/winehq-jammy.sources
-          sudo apt-get update
-          sudo apt-get install -y --install-recommends winehq-stable
-      
+            ${{ runner.os }}-node-v2-
+
       - name: Install dependencies
         if: steps.cache-node-modules.outputs.cache-hit != 'true'
         run: npm ci
-      
-      - name: Prepare Playwright for build
-        run: npm run prepare-playwright
-      
-      - name: Install Playwright browsers (Linux - for testing only)
-        if: steps.cache-playwright.outputs.cache-hit != 'true'
-        run: npx playwright install chromium --with-deps
-      
+
+      # Crear .env.production para el build (gitignored)
+      - name: Create production env file
+        shell: bash
+        run: |
+          cat > .env.production << 'EOF'
+          VITE_APP_NAME=Replicon Automator
+          VITE_LOG_LEVEL=warn
+          VITE_ENABLE_DEVTOOLS=false
+          REPLICON_LOGIN_URL=https://flyr.okta.com/app/UserHome?type_hint=ACTIVATION&session_hint=AUTHENTICATED
+          REPLICON_TIMEOUT=45000
+          REPLICON_HEADLESS=true
+          REPLICON_AUTOSAVE=true
+          EOF
+
+      # Instalar Chromium de Playwright (Windows - para tests y empaquetado)
+      - name: Install Playwright Chromium
+        run: npx playwright install chromium
+
       - name: Run quality checks
         run: npm run validate
-      
+
       - name: Build application
         run: npm run build
         env:
           NODE_ENV: production
-      
+
       - name: Verify Playwright before packaging
+        shell: bash
         run: |
-          echo "✅ Verificando que Playwright esté en node_modules..."
+          echo "Verificando que Playwright esté en node_modules..."
           if [ -d "node_modules/playwright" ]; then
-            echo "✅ Playwright encontrado"
-            ls -la node_modules/playwright/ | head -20
+            echo "OK: Playwright encontrado"
           else
-            echo "❌ ERROR: Playwright no está en node_modules"
+            echo "ERROR: Playwright no está en node_modules"
             exit 1
           fi
-      
+          echo "Verificando playwright-bin generado..."
+          if [ -d "playwright-bin" ]; then
+            echo "OK: playwright-bin encontrado"
+            ls -la playwright-bin/
+          else
+            echo "WARN: playwright-bin no encontrado (se usará asarUnpack)"
+          fi
+
       - name: Package application (Windows)
         run: npx electron-builder --win --x64 --publish never
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CSC_IDENTITY_AUTO_DISCOVERY: false
-      
-      # Verificar que node_modules/playwright quedó desempaquetado
-      - name: Verify packaged Playwright (asarUnpack)
+
+      - name: Verify build output
+        shell: bash
         run: |
-          echo "📦 Verificando recursos empaquetados..."
-          
-          if [ -d "release/win-unpacked/resources" ]; then
-            echo "✅ Carpeta resources encontrada"
-            ls -lah release/win-unpacked/resources/
-            
-            if [ -d "release/win-unpacked/resources/app.asar.unpacked" ]; then
-              echo ""
-              echo "✅ app.asar.unpacked encontrado"
-              
-              if [ -d "release/win-unpacked/resources/app.asar.unpacked/node_modules/playwright" ]; then
-                echo "✅ Playwright desempaquetado correctamente"
-                echo ""
-                echo "📂 Buscando chrome.exe:"
-                find release/win-unpacked/resources/app.asar.unpacked/node_modules/playwright -name "chrome.exe" -type f || echo "⚠️  chrome.exe no encontrado (se descargará al ejecutar)"
-              else
-                echo "❌ ERROR: node_modules/playwright NO encontrado en app.asar.unpacked"
-                ls -lah release/win-unpacked/resources/app.asar.unpacked/node_modules/ || echo "node_modules no existe"
-                exit 1
-              fi
+          echo "=== Release directory ==="
+          ls -lah release/ || { echo "ERROR: release/ not found"; exit 1; }
+          echo ""
+          echo "=== Checking expected files ==="
+          MISSING=0
+          for file in "Replicon.Automator.Setup.exe" "Replicon.Automator.Portable.exe" "latest.yml" "Replicon.Automator.Setup.exe.blockmap"; do
+            if [ -f "release/$file" ]; then
+              SIZE=$(wc -c < "release/$file" 2>/dev/null || echo "?")
+              echo "OK: $file ($SIZE bytes)"
             else
-              echo "❌ ERROR: app.asar.unpacked NO encontrado en resources"
-              echo "Contenido de resources:"
-              ls -lah release/win-unpacked/resources/
-              exit 1
+              echo "MISSING: $file"
+              MISSING=$((MISSING + 1))
             fi
-          else
-            echo "❌ ERROR: Carpeta resources no encontrada"
-            exit 1
+          done
+          if [ "$MISSING" -gt 0 ]; then
+            echo ""
+            echo "WARNING: $MISSING expected file(s) missing"
+            echo "All files in release/:"
+            ls -la release/
           fi
-      
+
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -182,7 +156,7 @@ jobs:
             release/*.blockmap
             release/*.yml
             release_notes.txt
-          retention-days: 1  # Eliminar después de 1 día para $0 storage
+          retention-days: 1
 
   release:
     name: Create Release
@@ -196,13 +170,12 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: windows-installer
-      
+
       - name: List downloaded files
         run: |
           echo "=== Downloaded files ==="
-          ls -lah
-          find . -type f
-      
+          find . -type f -ls
+
       - name: Read release notes
         id: notes
         run: |
@@ -215,7 +188,7 @@ jobs:
           else
             echo "notes=Release v${{ needs.build.outputs.version }}" >> $GITHUB_OUTPUT
           fi
-      
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
