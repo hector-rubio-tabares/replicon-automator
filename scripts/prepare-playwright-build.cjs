@@ -143,10 +143,16 @@ function ensureChromium() {
     return;
   }
 
-  // Si no existen, descargar
+  // En CI/CD, si el cache no tiene Chromium, solo avisar (no instalar con --with-deps)
+  if (process.env.CI) {
+    log('CI detectado: Chromium se instalará en un paso separado', 'warning');
+    return;
+  }
+
+  // Si no existen localmente, descargar sin dependencias del sistema
   log('Chromium no está instalado, descargando...', 'warning');
 
-  const result = spawnSync('npx', ['playwright', 'install', 'chromium', '--with-deps'], {
+  const result = spawnSync('npx', ['playwright', 'install', 'chromium'], {
     cwd: projectRoot,
     stdio: 'inherit',
     shell: process.platform === 'win32',
