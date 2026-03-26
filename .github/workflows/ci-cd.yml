@@ -117,7 +117,7 @@ jobs:
           fi
       
       - name: Package application (Windows)
-        run: npm run make:win
+        run: npx electron-forge make --platform=win32
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       
