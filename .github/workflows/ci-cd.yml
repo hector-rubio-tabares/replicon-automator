@@ -134,42 +134,43 @@ jobs:
           fi
       
       - name: Package application (Windows)
-        run: npx electron-builder --win --x64 --publish never
+        run: npm run make:win
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          CSC_IDENTITY_AUTO_DISCOVERY: false
       
       # Verificar que node_modules/playwright quedó desempaquetado
       - name: Verify packaged Playwright (asarUnpack)
         run: |
-          echo "📦 Verificando recursos empaquetados..."
+          echo "📦 Verificando recursos empaquetados (electron-forge)..."
           
-          if [ -d "release/win-unpacked/resources" ]; then
+          if [ -d "out/replicon-automator-win32-x64/resources" ]; then
             echo "✅ Carpeta resources encontrada"
-            ls -lah release/win-unpacked/resources/
+            ls -lah out/replicon-automator-win32-x64/resources/
             
-            if [ -d "release/win-unpacked/resources/app.asar.unpacked" ]; then
+            if [ -d "out/replicon-automator-win32-x64/resources/app.asar.unpacked" ]; then
               echo ""
               echo "✅ app.asar.unpacked encontrado"
               
-              if [ -d "release/win-unpacked/resources/app.asar.unpacked/node_modules/playwright" ]; then
+              if [ -d "out/replicon-automator-win32-x64/resources/app.asar.unpacked/node_modules/playwright" ]; then
                 echo "✅ Playwright desempaquetado correctamente"
                 echo ""
                 echo "📂 Buscando chrome.exe:"
-                find release/win-unpacked/resources/app.asar.unpacked/node_modules/playwright -name "chrome.exe" -type f || echo "⚠️  chrome.exe no encontrado (se descargará al ejecutar)"
+                find out/replicon-automator-win32-x64/resources/app.asar.unpacked/node_modules/playwright -name "chrome.exe" -type f || echo "⚠️  chrome.exe no encontrado (se descargará al ejecutar)"
               else
                 echo "❌ ERROR: node_modules/playwright NO encontrado en app.asar.unpacked"
-                ls -lah release/win-unpacked/resources/app.asar.unpacked/node_modules/ || echo "node_modules no existe"
+                ls -lah out/replicon-automator-win32-x64/resources/app.asar.unpacked/node_modules/ || echo "node_modules no existe"
                 exit 1
               fi
             else
               echo "❌ ERROR: app.asar.unpacked NO encontrado en resources"
               echo "Contenido de resources:"
-              ls -lah release/win-unpacked/resources/
+              ls -lah out/replicon-automator-win32-x64/resources/
               exit 1
             fi
           else
             echo "❌ ERROR: Carpeta resources no encontrada"
+            echo "Contenido de out/:"
+            ls -lah out/
             exit 1
           fi
       
@@ -178,9 +179,10 @@ jobs:
         with:
           name: windows-installer
           path: |
-            release/*.exe
-            release/*.blockmap
-            release/*.yml
+            out/make/squirrel.windows/x64/*.exe
+            out/make/squirrel.windows/x64/*.nupkg
+            out/make/squirrel.windows/x64/RELEASES
+            out/make/zip/win32/x64/*.zip
             release_notes.txt
           retention-days: 1  # Eliminar después de 1 día para $0 storage
 
@@ -224,8 +226,9 @@ jobs:
           draft: false
           prerelease: false
           files: |
-            release/*.exe
-            release/*.blockmap
-            release/latest.yml
+            *.exe
+            *.nupkg
+            *.zip
+            RELEASES
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
