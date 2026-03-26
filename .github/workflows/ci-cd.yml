@@ -18,7 +18,7 @@ env:
 jobs:
   build:
     name: Build & Quality Check
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     permissions:
       contents: write
     outputs:
@@ -31,6 +31,7 @@ jobs:
       
       - name: Get version from tag
         id: version
+        shell: bash
         run: |
           if [[ "${{ github.ref }}" =~ refs/tags/v(.+) ]]; then
             VERSION="${BASH_REMATCH[1]}"
@@ -42,6 +43,7 @@ jobs:
       
       - name: Extract release notes from CHANGELOG
         id: changelog
+        shell: bash
         run: |
           VERSION="${{ steps.version.outputs.version }}"
           
@@ -79,6 +81,7 @@ jobs:
           NODE_ENV: production
       
       - name: Debug - List dist folder contents
+        shell: bash
         run: |
           echo "=== Contents of dist/ ==="
           ls -lah dist/ || echo "dist/ does not exist"
@@ -97,6 +100,7 @@ jobs:
           fi
       
       - name: Verify Playwright before packaging
+        shell: bash
         run: |
           echo "✅ Verificando que Playwright esté en node_modules..."
           if [ -d "node_modules/playwright" ]; then
@@ -115,8 +119,11 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: windows-portable
+          name: windows-installer
           path: |
+            out/make/squirrel.windows/x64/*.exe
+            out/make/squirrel.windows/x64/*.nupkg
+            out/make/squirrel.windows/x64/RELEASES
             out/make/zip/win32/x64/*.zip
             release_notes.txt
           retention-days: 1  # Eliminar después de 1 día para $0 storage
@@ -132,9 +139,10 @@ jobs:
       - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
-          name: windows-portable
+          name: windows-installer
       
       - name: List downloaded files
+        shell: bash
         run: |
           echo "=== Downloaded files ==="
           ls -lah
@@ -142,6 +150,7 @@ jobs:
       
       - name: Read release notes
         id: notes
+        shell: bash
         run: |
           if [ -f release_notes.txt ]; then
             {
@@ -161,6 +170,9 @@ jobs:
           draft: false
           prerelease: false
           files: |
+            *.exe
+            *.nupkg
             *.zip
+            RELEASES
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

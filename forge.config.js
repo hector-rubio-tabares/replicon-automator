@@ -23,6 +23,14 @@ export default {
   },
   makers: [
     {
+      name: '@electron-forge/maker-squirrel',
+      config: {
+        name: 'RepliconAutomator',
+        setupIcon: join(__dirname, 'assets', 'icon.ico'),
+        iconUrl: 'https://raw.githubusercontent.com/hector26rubio2/replicon-automator/main/assets/icon.ico',
+      },
+    },
+    {
       name: '@electron-forge/maker-zip',
       platforms: ['win32'],
       config: {
