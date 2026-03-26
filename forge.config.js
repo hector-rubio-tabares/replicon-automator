@@ -7,7 +7,40 @@ const __dirname = dirname(__filename);
 export default {
   packagerConfig: {
     asar: true,
-    prune: false, // Do NOT prune based on .gitignore - include everything
+    prune: false,
+    // Ignore function: return true to IGNORE, false to KEEP
+    // Based on https://github.com/electron/packager/issues/1787
+    ignore: function(path) {
+      // KEEP these critical paths (must return false)
+      if (!path) return false;
+      if (path === '/dist' || path.startsWith('/dist/')) return false;
+      if (path === '/node_modules' || path.startsWith('/node_modules/')) return false;
+      if (path === '/package.json') return false;
+      if (path === '/playwright-bin' || path.startsWith('/playwright-bin/')) return false;
+      if (path === '/.env.production') return false;
+      if (path === '/assets' || path.startsWith('/assets/')) return false;
+      
+      // IGNORE everything else (return true)
+      if (path.startsWith('/src/')) return true;
+      if (path.startsWith('/test/')) return true;
+      if (path.startsWith('/scripts/')) return true;
+      if (path.startsWith('/docs/')) return true;
+      if (path.startsWith('/.github/')) return true;
+      if (path.startsWith('/coverage/')) return true;
+      if (path.startsWith('/out/')) return true;
+      if (path.startsWith('/release/')) return true;
+      if (path.startsWith('/.git/')) return true;
+      if (path.endsWith('.ts') || path.endsWith('.tsx')) return true;
+      if (path.endsWith('.test.js') || path.endsWith('.test.ts')) return true;
+      if (path.includes('tsconfig') && path.endsWith('.json')) return true;
+      if (path.includes('vite.config')) return true;
+      if (path.includes('vitest.config')) return true;
+      if (path.endsWith('.md') && path !== '/README.md') return true;
+      if (path.match(/\.(eslintrc|prettierrc|gitignore)$/)) return true;
+      
+      // Default: KEEP everything else
+      return false;
+    },
     asarUnpack: [
       '**/node_modules/playwright/**/*',
     ],
