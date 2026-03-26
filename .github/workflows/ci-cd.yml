@@ -61,14 +61,14 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
       
-      - name: Install Wine (required for packaging Windows on Linux)
+      - name: Install Wine & Mono (required for packaging Windows on Linux)
         run: |
           sudo dpkg --add-architecture i386
           sudo mkdir -pm755 /etc/apt/keyrings
           sudo wget -O /etc/apt/keyrings/winehq-archive.key https://dl.winehq.org/wine-builds/winehq.key
           sudo wget -NP /etc/apt/sources.list.d/ https://dl.winehq.org/wine-builds/ubuntu/dists/jammy/winehq-jammy.sources
           sudo apt-get update
-          sudo apt-get install -y --install-recommends winehq-stable
+          sudo apt-get install -y --install-recommends winehq-stable mono-devel
       
       - name: Install dependencies
         run: npm ci
